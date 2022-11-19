@@ -1,84 +1,84 @@
-import { StatusCodes } from 'http-status-codes'
+import { StatusCodes } from 'http-status-codes';
 export interface IErrorResponse {
-  message: string
-  statusCode: number
-  status: string
-  serializeErrors(): IError
+  message: string;
+  statusCode: number;
+  status: string;
+  serializeErrors(): IError;
 }
 
 export interface IError {
-  message: string
-  statusCode: number
-  status: string
+  message: string;
+  statusCode: number;
+  status: string;
 }
 
 export abstract class CustomError extends Error {
-  abstract statusCode: number
-  abstract status: string
+  abstract statusCode: number;
+  abstract status: string;
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 
   serializeErrors(): IError {
     return {
       message: this.message,
       statusCode: this.statusCode,
-      status: this.status,
-    }
+      status: this.status
+    };
   }
 }
 
 export class BadRequestError extends CustomError {
-  statusCode = StatusCodes.BAD_REQUEST
-  status = 'error'
+  statusCode = StatusCodes.BAD_REQUEST;
+  status = 'error';
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 }
 
 export class NotFoundError extends CustomError {
-  statusCode = StatusCodes.NOT_FOUND
-  status = 'error'
+  statusCode = StatusCodes.NOT_FOUND;
+  status = 'error';
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 }
 
 export class UnAuthorizedError extends CustomError {
-  statusCode = StatusCodes.UNAUTHORIZED
-  status = 'error'
+  statusCode = StatusCodes.UNAUTHORIZED;
+  status = 'error';
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 }
 
 export class IntervalServerError extends CustomError {
-  statusCode = StatusCodes.INTERNAL_SERVER_ERROR
-  status = 'error'
+  statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+  status = 'error';
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 }
 
 export class FilTooLargeError extends CustomError {
-  statusCode = StatusCodes.REQUEST_TOO_LONG
-  status = 'error'
+  statusCode = StatusCodes.REQUEST_TOO_LONG;
+  status = 'error';
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 }
 
 export class JoiValidationError extends CustomError {
-  statusCode = StatusCodes.REQUEST_TOO_LONG
-  status = 'error'
+  statusCode = StatusCodes.REQUEST_TOO_LONG;
+  status = 'error';
 
   constructor(message: string) {
-    super(message)
+    super(message);
   }
 }
