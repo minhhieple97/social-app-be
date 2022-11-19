@@ -10,12 +10,13 @@ import { Server as ServerSocket } from 'socket.io'
 import { createClient } from 'redis'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { StatusCodes } from 'http-status-codes'
-
+import Logger from 'bunyan'
 import {
   CustomError,
   IErrorResponse,
 } from './shared/globals/helpers/error-handler'
 const SERVER_PORT = 8000
+const logger: Logger = config.createLogger('server')
 export class Server {
   private app: Application
   constructor(app: Application) {
@@ -65,8 +66,8 @@ export class Server {
     })
 
     app.use(
-      (error: IErrorResponse, req: Request, res: Response, next: Function) => {
-        console.error(error)
+      (error: IErrorResponse, _req: Request, res: Response, next: Function) => {
+        logger.error(error)
         if (error instanceof CustomError) {
           return res.status(error.statusCode).json(error.serializeErrors())
         }
@@ -82,7 +83,7 @@ export class Server {
       this.startHttpServer(httpServer)
       this.socketIOConnections(socketServerIO)
     } catch (error) {
-      console.log(error)
+      logger.error(error)
     }
   }
 
@@ -96,7 +97,7 @@ export class Server {
     const pubClient = createClient({ url: config.REDIS_HOST })
     const subClient = pubClient.duplicate()
     await Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
-      console.log('Successfully connected to redis host')
+      logger.info('Successfully connected to redis host')
     })
     io.adapter(createAdapter(pubClient, subClient))
     return io
@@ -104,7 +105,7 @@ export class Server {
 
   private startHttpServer(httpServer: http.Server) {
     httpServer.listen(SERVER_PORT, () => {
-      console.log(
+      logger.info(
         `Server runing on port ${SERVER_PORT} with process ${process.pid}`
       )
     })

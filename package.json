@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon -r tsconfig-paths/register src/app.ts"
+    "dev": "nodemon -r tsconfig-paths/register src/app.ts | bunyan"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/minhhieple97/social-app-be#readme",
   "dependencies": {
     "@socket.io/redis-adapter": "^7.2.0",
+    "bunyan": "^1.8.15",
     "compression": "^1.7.4",
     "cookie-session": "^2.0.0",
     "cors": "^2.8.5",
@@ -34,6 +35,7 @@
     "ts-node": "^10.9.1"
   },
   "devDependencies": {
+    "@types/bunyan": "^1.8.8",
     "@types/compression": "^1.7.2",
     "@types/cookie-session": "^2.0.44",
     "@types/cors": "^2.8.12",
