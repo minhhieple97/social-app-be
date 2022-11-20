@@ -5,13 +5,13 @@ import helmet from 'helmet';
 import hpp from 'hpp';
 import cookieSession from 'cookie-session';
 import compression from 'compression';
-import { config } from './config';
+import { config } from '@root/config';
 import { Server as ServerSocket } from 'socket.io';
 import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { StatusCodes } from 'http-status-codes';
 import Logger from 'bunyan';
-import { CustomError, IErrorResponse } from './shared/globals/helpers/error-handler';
+import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 const SERVER_PORT = 8000;
 const logger: Logger = config.createLogger('server');
 export class Server {
