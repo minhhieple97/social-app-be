@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import bunyan from 'bunyan';
+import cloudinary from 'cloudinary';
 dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
@@ -8,16 +9,21 @@ class Config {
   public SECRET_KEY_COOKIE_1: string | undefined;
   public SECRET_KEY_COOKIE_2: string | undefined;
   public CLIENT_URL: string | undefined;
-  public DATABASE_URL_DEFAULT = 'mongodb://127.0.0.1:27017/social';
+  public DATABASE_URL_DEFAULT: string | undefined;
   public REDIS_HOST: string | undefined;
+  public CLOUDINARY_API_KEY: string | undefined;
+  public CLOUDINARY_SECRET_KEY: string | undefined;
+  public CLOUDINARY_PROJECT_NAME: string | undefined;
   constructor() {
-    this.DATABASE_URL = process.env.DATABASE_URL || this.DATABASE_URL_DEFAULT;
+    this.DATABASE_URL = process.env.DATABASE_URL;
     this.JWT_TOKEN = process.env.JWT_TOKEN || 'jwt-token-default';
     this.NODE_ENV = process.env.NODE_ENV || 'development';
     this.SECRET_KEY_COOKIE_1 = process.env.SECRET_KEY_COOKIE_1 || 'SECRET_KEY_COOKIE_1_DEFAULT';
     this.SECRET_KEY_COOKIE_2 = process.env.SECRET_KEY_COOKIE_2 || 'SECRET_KEY_COOKIE_2_DEFAULT';
-    this.CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
-    this.REDIS_HOST = process.env.REDIS_HOST || 'redis://localhost:6379';
+    this.CLOUDINARY_PROJECT_NAME = process.env.CLOUDINARY_PROJECT_NAME;
+    this.CLIENT_URL = process.env.CLIENT_URL;
+    this.CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+    this.CLOUDINARY_SECRET_KEY = process.env.CLOUDINARY_SECRET_KEY;
   }
 
   public validateConfig() {
@@ -28,6 +34,13 @@ class Config {
 
   public createLogger(name: string) {
     return bunyan.createLogger({ name, level: 'debug' });
+  }
+  public cloudinaryConfig(): void {
+    cloudinary.v2.config({
+      cloud_name: config.CLOUDINARY_PROJECT_NAME,
+      api_key: config.CLOUDINARY_API_KEY,
+      api_secret: config.CLOUDINARY_SECRET_KEY
+    });
   }
 }
 export const config: Config = new Config();
