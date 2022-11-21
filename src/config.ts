@@ -1,6 +1,11 @@
 import dotenv from 'dotenv';
 import bunyan from 'bunyan';
 import cloudinary from 'cloudinary';
+import { format, createLogger, transports } from 'winston';
+const { combine, timestamp, label, printf } = format;
+const customFormat = printf(({ level, message, label, timestamp }) => {
+  return `${timestamp} [${label}] ${level}: ${message}`;
+});
 dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
@@ -32,9 +37,20 @@ class Config {
     }
   }
 
-  public createLogger(name: string) {
-    return bunyan.createLogger({ name, level: 'debug' });
+  public createLogger(category: string) {
+    return createLogger({
+      level: 'debug',
+      format: combine(
+        label({ label: category }),
+        timestamp({
+          format: 'DD-MM-YYYY HH:mm:ss'
+        }),
+        customFormat
+      ),
+      transports: [new transports.Console()]
+    });
   }
+
   public cloudinaryConfig(): void {
     cloudinary.v2.config({
       cloud_name: config.CLOUDINARY_PROJECT_NAME,

@@ -10,10 +10,9 @@ import { Server as ServerSocket } from 'socket.io';
 import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { StatusCodes } from 'http-status-codes';
-import Logger from 'bunyan';
 import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 const SERVER_PORT = 8000;
-const logger: Logger = config.createLogger('server');
+const logger = config.createLogger('server');
 export class Server {
   private app: Application;
   constructor(app: Application) {

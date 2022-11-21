@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "nodemon ./build/src/app.js",
-    "dev": "nodemon -r tsconfig-paths/register src/app.ts | bunyan",
+    "dev": "nodemon -r tsconfig-paths/register src/app.ts",
     "lint:check": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "prettier:check": "prettier --check \"src/**/*.{ts,json}\"",
@@ -25,7 +25,6 @@
   "homepage": "https://github.com/minhhieple97/social-app-be#readme",
   "dependencies": {
     "@socket.io/redis-adapter": "^7.2.0",
-    "bunyan": "^1.8.15",
     "cloudinary": "^1.32.0",
     "compression": "^1.7.4",
     "cookie-session": "^2.0.0",
@@ -38,13 +37,12 @@
     "http-status-codes": "^2.2.0",
     "mongoose": "^6.7.2",
     "redis": "^4.5.0",
-    "rollup-plugin-typescript2": "^0.34.1",
     "socket.io": "^4.5.3",
     "ts-node": "^10.9.1",
-    "typescript-transform-paths": "^3.4.4"
+    "typescript-transform-paths": "^3.4.4",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
-    "@types/bunyan": "^1.8.8",
     "@types/compression": "^1.7.2",
     "@types/cookie-session": "^2.0.44",
     "@types/cors": "^2.8.12",
