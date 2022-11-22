@@ -1,10 +1,10 @@
 import dotenv from 'dotenv';
-import bunyan from 'bunyan';
 import cloudinary from 'cloudinary';
 import { format, createLogger, transports } from 'winston';
 const { combine, timestamp, label, printf } = format;
+const colorizer = format.colorize();
 const customFormat = printf(({ level, message, label, timestamp }) => {
-  return `${timestamp} [${label}] ${level}: ${message}`;
+  return colorizer.colorize(level, `${timestamp} [${label}] : ${message}`);
 });
 dotenv.config({});
 class Config {
@@ -47,7 +47,7 @@ class Config {
         }),
         customFormat
       ),
-      transports: [new transports.Console()]
+      transports: [new transports.Console({})]
     });
   }
 
