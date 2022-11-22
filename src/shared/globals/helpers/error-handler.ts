@@ -77,7 +77,6 @@ export class FilTooLargeError extends CustomError {
 export class JoiValidationError extends CustomError {
   statusCode = StatusCodes.REQUEST_TOO_LONG;
   status = 'error';
-
   constructor(message: string) {
     super(message);
   }
