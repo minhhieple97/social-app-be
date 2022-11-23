@@ -6,13 +6,13 @@ import { signupSchema } from '@auth/schemas/signup.schema';
 import { joiValidation } from '@global/decorators/joi-validation.decorator';
 import { BadRequestError } from '@global/helpers/error-handler';
 import { authService } from '@service/db/auth.service';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { uploads } from '@global/helpers/cloudinary-upload';
 import Utils from '@global/helpers/utils';
 import HTTP_STATUS_CODE from 'http-status-codes';
 export class SignUp {
   @joiValidation(signupSchema)
-  public async create(req: Request, res: Response): Promise<void> {
+  public async create(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const { username, password, email, avatarColor, avatarImage } = req.body;
     const checkUserExists: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
     if (checkUserExists) {
@@ -21,7 +21,7 @@ export class SignUp {
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
     const uId = Utils.generateRandomIntegers(12);
-    const authData: IAuthDocument = await SignUp.prototype.sinupData({
+    const authData: IAuthDocument = SignUp.prototype.sinupData({
       _id: authObjectId,
       uId: `${uId}`,
       username,
