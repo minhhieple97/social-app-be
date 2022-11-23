@@ -11,6 +11,7 @@ import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { StatusCodes } from 'http-status-codes';
 import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
+import applicationRoutes from '@root/routes';
 const SERVER_PORT = 8000;
 const logger = config.createLogger('server');
 export class Server {
@@ -21,7 +22,7 @@ export class Server {
   public start(): void {
     this.securityMiddleware(this.app);
     this.standardMiddleware(this.app);
-    // this.routesMiddleware(this.app);
+    this.routesMiddleware(this.app);
     this.globalErrorHandler(this.app);
     this.startServer(this.app);
   }
@@ -52,15 +53,17 @@ export class Server {
     app.use(urlencoded({ extended: true, limit: '50mb' }));
   }
 
-  // private routesMiddleware() {}
+  private routesMiddleware(app: Application): void {
+    applicationRoutes(app);
+  }
 
-  private globalErrorHandler(app: Application) {
+  private globalErrorHandler(app: Application): void {
     app.all('*', (req: Request, res: Response) => {
       res.status(StatusCodes.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
     });
 
     app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction) => {
-      logger.error(error);
+      logger.error('loi o day', error);
       if (error instanceof CustomError) {
         return res.status(error.statusCode).json(error.serializeErrors());
       }

@@ -1,4 +1,4 @@
-import { StatusCodes } from 'http-status-codes';
+import HTTP_STATUS_CODE from 'http-status-codes';
 export interface IErrorResponse {
   message: string;
   statusCode: number;
@@ -30,7 +30,7 @@ export abstract class CustomError extends Error {
 }
 
 export class BadRequestError extends CustomError {
-  statusCode = StatusCodes.BAD_REQUEST;
+  statusCode = HTTP_STATUS_CODE.BAD_REQUEST;
   status = 'error';
 
   constructor(message: string) {
@@ -39,7 +39,7 @@ export class BadRequestError extends CustomError {
 }
 
 export class NotFoundError extends CustomError {
-  statusCode = StatusCodes.NOT_FOUND;
+  statusCode = HTTP_STATUS_CODE.NOT_FOUND;
   status = 'error';
 
   constructor(message: string) {
@@ -48,7 +48,7 @@ export class NotFoundError extends CustomError {
 }
 
 export class UnAuthorizedError extends CustomError {
-  statusCode = StatusCodes.UNAUTHORIZED;
+  statusCode = HTTP_STATUS_CODE.UNAUTHORIZED;
   status = 'error';
 
   constructor(message: string) {
@@ -57,7 +57,7 @@ export class UnAuthorizedError extends CustomError {
 }
 
 export class IntervalServerError extends CustomError {
-  statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+  statusCode = HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR;
   status = 'error';
 
   constructor(message: string) {
@@ -66,7 +66,7 @@ export class IntervalServerError extends CustomError {
 }
 
 export class FilTooLargeError extends CustomError {
-  statusCode = StatusCodes.REQUEST_TOO_LONG;
+  statusCode = HTTP_STATUS_CODE.REQUEST_TOO_LONG;
   status = 'error';
 
   constructor(message: string) {
@@ -75,7 +75,7 @@ export class FilTooLargeError extends CustomError {
 }
 
 export class JoiValidationError extends CustomError {
-  statusCode = StatusCodes.REQUEST_TOO_LONG;
+  statusCode = HTTP_STATUS_CODE.REQUEST_TOO_LONG;
   status = 'error';
   constructor(message: string) {
     super(message);

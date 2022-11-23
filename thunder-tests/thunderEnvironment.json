@@ -1,0 +1,30 @@
+[
+  {
+    "_id": "6c04a308-4f23-4922-9df4-e835c6009e20",
+    "name": "social-env",
+    "default": true,
+    "sortNum": 10000,
+    "created": "2022-11-23T07:43:04.727Z",
+    "modified": "2022-11-23T07:59:44.194Z",
+    "data": [
+      {
+        "name": "BASE_URL",
+        "value": "http://localhost:8000"
+      },
+      {
+        "name": "BASE_PATH",
+        "value": "/api/v1"
+      }
+    ]
+  },
+  {
+    "_id": "0c4ee773-2e7d-4b9e-ab2c-5e8e4fc11870",
+    "name": "(Global Env)",
+    "default": false,
+    "global": true,
+    "sortNum": -2,
+    "created": "2022-11-23T07:49:06.522Z",
+    "modified": "2022-11-23T07:49:06.522Z",
+    "data": []
+  }
+]
