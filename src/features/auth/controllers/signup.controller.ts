@@ -1,3 +1,4 @@
+import { config } from '@root/config';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import { UploadApiResponse } from 'cloudinary';
 import { ISignUpData } from './../interfaces/auth.interface';
@@ -24,7 +25,7 @@ export class SignUp {
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
     const uId = Utils.generateRandomIntegers(12);
-    const authData: IAuthDocument = SignUp.prototype.sinupData({
+    const authData: IAuthDocument = SignUp.prototype.signupData({
       _id: authObjectId,
       uId: `${uId}`,
       username,
@@ -38,13 +39,15 @@ export class SignUp {
     }
     // add user info to cache
     const userInfoForCache = SignUp.prototype.userData(authData, userObjectId);
-    userInfoForCache.profilePicture = `https://res.cloudinary.com/db34gggw4/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
+    userInfoForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${
+      responseUpload.version
+    }/${userObjectId.toString()}.jpg`;
     await userCache.saveUserToCache(`${userObjectId}`, `${uId}`, userInfoForCache);
 
     res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', ...authData });
   }
 
-  private sinupData(data: ISignUpData): IAuthDocument {
+  private signupData(data: ISignUpData): IAuthDocument {
     const { _id, username, email, uId, password, avatarColor } = data;
     return {
       _id,
@@ -58,7 +61,7 @@ export class SignUp {
   }
 
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
-    const { _id, username, email, uId, password, avatarColor } = data;
+    const { _id, username, email, uId, avatarColor } = data;
     return {
       _id: userObjectId,
       authId: _id,
