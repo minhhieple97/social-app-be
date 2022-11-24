@@ -5,5 +5,80 @@ export class UserCache extends BaseCache {
   constructor() {
     super('user.cache');
   }
-  public async saveUserToCache(key: string, userId: string, createUser: IUserDocument): Promise<void> {}
+  public async saveUserToCache(key: string, userUId: string, createUser: IUserDocument): Promise<void> {
+    const createdAt = new Date();
+    const {
+      _id,
+      authId,
+      username,
+      email,
+      avatarColor,
+      uId,
+      postsCount,
+      work,
+      school,
+      quote,
+      location,
+      blocked,
+      blockedBy,
+      followersCount,
+      followingCount,
+      notifications,
+      social,
+      bgImageVersion,
+      bgImageId,
+      profilePicture
+    } = createUser;
+    const dataInsert: string[] = [
+      '_id',
+      `${_id}`,
+      'uId',
+      `${uId}`,
+      'authId',
+      `${authId}`,
+      'username',
+      `${username}`,
+      'email',
+      `${email}`,
+      'avatarColor',
+      `${avatarColor}`,
+      'createdAt',
+      `${createdAt}`,
+      'postsCount',
+      `${postsCount}`,
+      'work',
+      `${work}`,
+      'blocked',
+      `${JSON.stringify(blocked)}`,
+      'blockedBy',
+      `${JSON.stringify(blockedBy)}`,
+      'profilePicture',
+      `${profilePicture}`,
+      'followersCount',
+      `${followersCount}`,
+      'followingCount',
+      `${followingCount}`,
+      'notifications',
+      `${JSON.stringify(notifications)}`,
+      'social',
+      `${JSON.stringify(social)}`,
+      'location',
+      `${location}`,
+      'school',
+      `${school}`,
+      'quote',
+      `${quote}`,
+      'bgImageVersion',
+      `${bgImageVersion}`,
+      'bgImageId',
+      `${bgImageId}`
+    ];
+    try {
+      if (!this.client.isOpen) {
+        await this.client.connect();
+      }
+      await this.client.ZADD('user', { score: parseInt(userUId, 10), value: `${key}` });
+      await this.client.HSET(`users:${key}`, dataInsert);
+    } catch (error) {}
+  }
 }

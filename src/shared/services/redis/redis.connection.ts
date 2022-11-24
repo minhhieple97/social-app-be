@@ -2,7 +2,7 @@ import { BaseCache } from './base.cache';
 
 class RedisConnection extends BaseCache {
   constructor() {
-    super('redis_connection');
+    super('redis.connection');
   }
   async connect(): Promise<void> {
     try {
