@@ -39,9 +39,9 @@ class Config {
     }
   }
 
-  public createLogger(category: string) {
+  public createLogger(category: string, level: string = 'debug') {
     return createLogger({
-      level: 'debug',
+      level,
       format: combine(
         label({ label: category }),
         timestamp({
