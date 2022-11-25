@@ -1,14 +1,15 @@
 import { authService } from '@service/db/auth.service';
+import { userService } from '@service/db/user.service';
 import { Job, DoneCallback } from 'bull';
 import { BaseWorker } from './base.worker';
-class AuthWorker extends BaseWorker {
+class UserWorker extends BaseWorker {
   constructor() {
-    super('auth');
+    super('user');
   }
-  async addAuthUserToDb(job: Job, done: DoneCallback): Promise<void> {
+  async addUserToDb(job: Job, done: DoneCallback): Promise<void> {
     try {
       const { value } = job.data;
-      await authService.createAuthUser(value);
+      await userService.createUser(value);
       job.progress(100);
       done(null, job.data);
     } catch (error) {
@@ -18,4 +19,4 @@ class AuthWorker extends BaseWorker {
   }
 }
 
-export const authWorker: AuthWorker = new AuthWorker();
+export const userWorker: UserWorker = new UserWorker();

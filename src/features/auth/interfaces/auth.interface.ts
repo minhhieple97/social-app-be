@@ -32,7 +32,7 @@ export interface IAuthDocument extends Document {
   passwordResetExpires?: number | string;
   comparePassword(password: string): Promise<boolean>;
   hashPassword(password: string): Promise<string>;
-  salt: string;
+  salt: String;
 }
 
 export interface ISignUpData {

@@ -26,22 +26,21 @@ const authSchema: Schema = new Schema(
 );
 
 authSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
-  const salt = crypto.randomBytes(20).toString('hex');
-  const hashedPassword: string = await hash((config.SECRET_KEY! + this.password + salt) as string);
-  this.salt = salt;
+  const salt = crypto.randomBytes(20);
+  const hashedPassword: string = await hash(this.password! + config.SECRET_KEY, { salt });
+  this.salt = salt.toString('hex');
   this.password = hashedPassword;
   next();
 });
 
 authSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   const hashedPassword: string = (this as unknown as IAuthDocument).password!;
-  const salt: string = (this as unknown as IAuthDocument).salt!;
-  return verify(config.SECRET_KEY + password + salt, hashedPassword);
+  const salt: String = (this as unknown as IAuthDocument).salt!;
+  return verify(config.SECRET_KEY + password, hashedPassword, { salt: Buffer.from(salt, 'hex') });
 };
 
-authSchema.methods.hashPassword = async function (password: string): Promise<string> {
-  const salt = crypto.randomBytes(20).toString('hex');
-  return hash(config.SECRET_KEY + password + salt);
+authSchema.methods.hashPassword = async function (password: string, salt: String): Promise<string> {
+  return hash(config.SECRET_KEY + password, { salt: Buffer.from(salt, 'hex') });
 };
 
 const AuthModel: Model<IAuthDocument> = model<IAuthDocument>('Auth', authSchema, 'Auth');

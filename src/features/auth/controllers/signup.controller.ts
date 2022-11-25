@@ -14,39 +14,51 @@ import { UserCache } from '@service/redis/user.cache';
 import { config } from '@root/config';
 import { omit } from 'lodash';
 import { authQueue } from '@service/queues/auth.queue';
+import { QUEUE } from '@global/constants';
+import { userQueue } from '@service/queues/user.queue';
+import jwt from 'jsonwebtoken';
 const userCache: UserCache = new UserCache();
 export class SignUp {
   @joiValidation(signupSchema)
-  public async create(req: Request, res: Response, _next: NextFunction): Promise<void> {
-    const { username, password, email, avatarColor, avatarImage } = req.body;
-    const checkUserExists: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
-    if (checkUserExists) {
-      throw new BadRequestError('Invalid credentials');
-    }
-    const authObjectId: ObjectId = new ObjectId();
-    const userObjectId: ObjectId = new ObjectId();
-    const uId = Utils.generateRandomIntegers(12);
-    const authData: IAuthDocument = SignUp.prototype.signupData({
-      _id: authObjectId,
-      uId: `${uId}`,
-      username,
-      email,
-      password,
-      avatarColor
-    });
-    const responseUpload: UploadApiResponse = (await uploads(avatarImage, userObjectId.toString(), true, true)) as UploadApiResponse;
-    if (!responseUpload.public_id) {
-      throw new BadRequestError('File upload: Error occurred while uploading, please try again');
-    }
-    // add user info to cache
-    const userInfoForCache = SignUp.prototype.userData(authData, userObjectId);
-    userInfoForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
-    await userCache.saveUserToCache(`${userObjectId}`, `${uId}`, userInfoForCache);
+  public async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { username, password, email, avatarColor, avatarImage } = req.body;
+      const checkUserExists: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
+      if (checkUserExists) {
+        throw new BadRequestError('Invalid credentials');
+      }
+      const authObjectId: ObjectId = new ObjectId();
+      const userObjectId: ObjectId = new ObjectId();
+      const uId = Utils.generateRandomIntegers(12);
+      const authData: IAuthDocument = SignUp.prototype.signupData({
+        _id: authObjectId,
+        uId: `${uId}`,
+        username,
+        email,
+        password,
+        avatarColor
+      });
+      const responseUpload: UploadApiResponse = (await uploads(avatarImage, userObjectId.toString(), true, true)) as UploadApiResponse;
 
-    // add to database
-    omit(userInfoForCache, ['uId', 'username', 'email', 'avatarColor', 'password']);
-    authQueue.addAuthUserJob('addAuthUserToDb', { value: userInfoForCache });
-    res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', ...authData });
+      if (!responseUpload.public_id) {
+        throw new BadRequestError('File upload: Error occurred while uploading, please try again');
+      }
+      // add user info to cache
+      const userInfoForCache = SignUp.prototype.userData(authData, userObjectId);
+      userInfoForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
+      await userCache.saveUserToCache(`${userObjectId}`, `${uId}`, userInfoForCache);
+
+      // add user info to database
+      authQueue.addAuthUserJob(QUEUE.ADD_AUTH_USER_TO_DB, { value: authData });
+      omit(userInfoForCache, ['uId', 'username', 'email', 'avatarColor', 'password']);
+      userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { value: userInfoForCache });
+      // sign jwt token
+      const userJwtToken: string = SignUp.prototype.signJwtToken(authData, userObjectId);
+      req.session = { token: userJwtToken };
+      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', ...authData, token: userJwtToken });
+    } catch (error) {
+      next(error);
+    }
   }
 
   private signupData(data: ISignUpData): IAuthDocument {
@@ -60,6 +72,18 @@ export class SignUp {
       avatarColor,
       createdAt: new Date()
     } as unknown as IAuthDocument;
+  }
+
+  private signJwtToken(data: IAuthDocument, userObjectId: ObjectId): string {
+    return jwt.sign(
+      {
+        userId: userObjectId,
+        uId: data.uId,
+        username: data.username,
+        avatarColor: data.avatarColor
+      },
+      config.JWT_TOKEN!
+    );
   }
 
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {

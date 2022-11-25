@@ -9,7 +9,7 @@ import { config } from '@root/config';
 import { Server as ServerSocket } from 'socket.io';
 import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
-import { StatusCodes } from 'http-status-codes';
+import HTTP_STATUS_CODE from 'http-status-codes';
 import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 import applicationRoutes from '@root/routes';
 const SERVER_PORT = 8000;
@@ -59,14 +59,15 @@ export class Server {
 
   private globalErrorHandler(app: Application): void {
     app.all('*', (req: Request, res: Response) => {
-      res.status(StatusCodes.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
+      res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
     });
 
     app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction) => {
       if (error instanceof CustomError) {
         return res.status(error.statusCode).json(error.serializeErrors());
       }
-      next();
+      logger.error(error.message);
+      return res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).end();
     });
   }
 
