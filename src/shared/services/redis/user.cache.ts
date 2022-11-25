@@ -29,7 +29,7 @@ export class UserCache extends BaseCache {
       bgImageId,
       profilePicture
     } = createUser;
-    const dataInsert: string[] = [
+    const dataUserCache: string[] = [
       '_id',
       `${_id}`,
       'uId',
@@ -78,7 +78,7 @@ export class UserCache extends BaseCache {
         await this.client.connect();
       }
       await this.client.ZADD('user', { score: parseInt(userUId, 10), value: `${key}` });
-      await this.client.HSET(`users:${key}`, dataInsert);
+      await this.client.HSET(`users:${key}`, dataUserCache);
     } catch (error) {}
   }
 }

@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { ObjectId } from 'mongodb';
+import { IUserDocument } from '@user/interfaces/user.interface';
 // import { IUserDocument } from '@user/interfaces/user.interface';
 
 declare global {
@@ -31,7 +32,7 @@ export interface IAuthDocument extends Document {
   passwordResetExpires?: number | string;
   comparePassword(password: string): Promise<boolean>;
   hashPassword(password: string): Promise<string>;
-  salt: string;
+  salt: String;
 }
 
 export interface ISignUpData {
@@ -44,5 +45,5 @@ export interface ISignUpData {
 }
 
 export interface IAuthJob {
-  value?: string | IAuthDocument;
+  value?: string | IAuthDocument | IUserDocument;
 }
