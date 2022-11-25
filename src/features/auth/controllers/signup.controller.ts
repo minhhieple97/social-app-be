@@ -1,8 +1,7 @@
 import { IUserDocument } from '@user/interfaces/user.interface';
 import { UploadApiResponse } from 'cloudinary';
-import { ISignUpData } from './../interfaces/auth.interface';
 import { ObjectId } from 'mongodb';
-import { IAuthDocument } from '@auth/interfaces/auth.interface';
+import { IAuthDocument, ISignUpData } from '@auth/interfaces/auth.interface';
 import { signupSchema } from '@auth/schemas/signup.schema';
 import { joiValidation } from '@global/decorators/joi-validation.decorator';
 import { BadRequestError } from '@global/helpers/error-handler';
@@ -12,6 +11,9 @@ import { uploads } from '@global/helpers/cloudinary-upload';
 import Utils from '@global/helpers/utils';
 import HTTP_STATUS_CODE from 'http-status-codes';
 import { UserCache } from '@service/redis/user.cache';
+import { config } from '@root/config';
+import { omit } from 'lodash';
+import { authQueue } from '@service/queues/auth.queue';
 const userCache: UserCache = new UserCache();
 export class SignUp {
   @joiValidation(signupSchema)
@@ -24,7 +26,7 @@ export class SignUp {
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
     const uId = Utils.generateRandomIntegers(12);
-    const authData: IAuthDocument = SignUp.prototype.sinupData({
+    const authData: IAuthDocument = SignUp.prototype.signupData({
       _id: authObjectId,
       uId: `${uId}`,
       username,
@@ -38,13 +40,16 @@ export class SignUp {
     }
     // add user info to cache
     const userInfoForCache = SignUp.prototype.userData(authData, userObjectId);
-    userInfoForCache.profilePicture = `https://res.cloudinary.com/db34gggw4/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
+    userInfoForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
     await userCache.saveUserToCache(`${userObjectId}`, `${uId}`, userInfoForCache);
 
+    // add to database
+    omit(userInfoForCache, ['uId', 'username', 'email', 'avatarColor', 'password']);
+    authQueue.addAuthUserJob('addAuthUserToDb', { value: userInfoForCache });
     res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', ...authData });
   }
 
-  private sinupData(data: ISignUpData): IAuthDocument {
+  private signupData(data: ISignUpData): IAuthDocument {
     const { _id, username, email, uId, password, avatarColor } = data;
     return {
       _id,
