@@ -27,7 +27,7 @@ const authSchema: Schema = new Schema(
 
 authSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
   const salt = crypto.randomBytes(20);
-  const hashedPassword: string = await hash(this.password! + config.SECRET_KEY, { salt });
+  const hashedPassword: string = await hash(this.password! + config.PEPPER_SECRET, { salt });
   this.salt = salt.toString('hex');
   this.password = hashedPassword;
   next();
@@ -35,11 +35,11 @@ authSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
 
 authSchema.methods.comparePassword = async function (password: string, salt: string): Promise<boolean> {
   const hashedPassword: string = (this as unknown as IAuthDocument).password!;
-  return verify(hashedPassword, password + config.SECRET_KEY, { salt: Buffer.from(salt, 'hex') });
+  return verify(hashedPassword, password + config.PEPPER_SECRET, { salt: Buffer.from(salt, 'hex') });
 };
 
 authSchema.methods.hashPassword = async function (password: string, salt: String): Promise<string> {
-  return hash(config.SECRET_KEY + password, { salt: Buffer.from(salt, 'hex') });
+  return hash(config.PEPPER_SECRET + password, { salt: Buffer.from(salt, 'hex') });
 };
 
 const AuthModel: Model<IAuthDocument> = model<IAuthDocument>('Auth', authSchema, 'Auth');

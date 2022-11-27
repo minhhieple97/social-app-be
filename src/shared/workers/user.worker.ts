@@ -1,5 +1,4 @@
-import { authService } from '@service/db/auth.service';
-import { userService } from '@service/db/user.service';
+import { userService } from '@user/services/user.service';
 import { Job, DoneCallback } from 'bull';
 import { BaseWorker } from './base.worker';
 class UserWorker extends BaseWorker {

@@ -8,6 +8,7 @@ export interface IUserDocument extends Document {
   email?: string;
   password?: string;
   avatarColor?: string;
+  profileImgVersion: number;
   uId?: string;
   postsCount: number;
   work: string;

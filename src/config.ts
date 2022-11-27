@@ -15,7 +15,7 @@ class Config {
   public CLOUDINARY_API_KEY: string | undefined;
   public CLOUDINARY_SECRET_KEY: string | undefined;
   public CLOUDINARY_PROJECT_NAME: string | undefined;
-  public SECRET_KEY: string | undefined;
+  public PEPPER_SECRET: string | undefined;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.JWT_TOKEN = process.env.JWT_TOKEN || 'jwt-token-default';
@@ -26,7 +26,7 @@ class Config {
     this.CLIENT_URL = process.env.CLIENT_URL;
     this.CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
     this.CLOUDINARY_SECRET_KEY = process.env.CLOUDINARY_SECRET_KEY;
-    this.SECRET_KEY = process.env.SECRET_KEY;
+    this.PEPPER_SECRET = process.env.PEPPER_SECRET;
   }
 
   public validateConfig() {

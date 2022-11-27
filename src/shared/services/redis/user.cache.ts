@@ -79,3 +79,5 @@ export class UserCache extends BaseCache {
     } catch (error) {}
   }
 }
+
+export const userCache: UserCache = new UserCache();

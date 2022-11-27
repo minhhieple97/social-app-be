@@ -1,3 +1,4 @@
+import { config } from '@root/config';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import mongoose, { model, Model, Schema } from 'mongoose';
 
@@ -27,8 +28,13 @@ const userSchema: Schema = new Schema({
   location: { type: String, default: '' },
   quote: { type: String, default: '' },
   bgImageVersion: { type: String, default: '' },
-  bgImageId: { type: String, default: '' }
+  bgImageId: { type: String, default: '' },
+  profileImgVersion: { type: String, default: '' }
 });
+
+userSchema.methods.getProfilePicture = function (): string {
+  return `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${this.profilePictureVersion}/${this._id}.jpg`;
+};
 
 const UserModel: Model<IUserDocument> = model<IUserDocument>('User', userSchema, 'User');
 export { UserModel };

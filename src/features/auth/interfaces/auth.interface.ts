@@ -35,13 +35,23 @@ export interface IAuthDocument extends Document {
   salt: string;
 }
 
-export interface ISignUpData {
+export type ISignUpData = Partial<ISignUpInput> & {
   _id: ObjectId;
   uId: string;
+};
+
+export interface ISignUpInput {
   email: string;
   username: string;
   password: string;
   avatarColor: string;
+  avatarImage: string;
+}
+
+export interface IAuthInput {
+  email?: string;
+  username?: string;
+  password: string;
 }
 
 export interface IAuthJob {
