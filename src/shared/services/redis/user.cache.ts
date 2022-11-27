@@ -26,8 +26,7 @@ export class UserCache extends BaseCache {
       notifications,
       social,
       bgImageVersion,
-      bgImageId,
-      profilePicture
+      bgImageId
     } = createUser;
     const dataUserCache: string[] = [
       '_id',
@@ -52,8 +51,6 @@ export class UserCache extends BaseCache {
       `${JSON.stringify(blocked)}`,
       'blockedBy',
       `${JSON.stringify(blockedBy)}`,
-      'profilePicture',
-      `${profilePicture}`,
       'followersCount',
       `${followersCount}`,
       'followingCount',

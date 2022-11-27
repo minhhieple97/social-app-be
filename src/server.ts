@@ -66,7 +66,9 @@ export class Server {
       if (error instanceof CustomError) {
         return res.status(error.statusCode).json(error.serializeErrors());
       }
-      logger.error(error.message);
+      if (config.NODE_ENV !== 'production') {
+        logger.error(error);
+      }
       return res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).end();
     });
   }

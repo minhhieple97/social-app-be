@@ -22,7 +22,6 @@ export interface IUserDocument extends Document {
   social: ISocialLinks;
   bgImageVersion: string;
   bgImageId: string;
-  profilePicture: string;
   createdAt?: Date;
 }
 
@@ -56,7 +55,6 @@ export interface ISocialLinks {
 
 export interface ISearchUser {
   _id: string;
-  profilePicture: string;
   username: string;
   email: string;
   avatarColor: string;

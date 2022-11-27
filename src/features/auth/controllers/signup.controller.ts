@@ -45,7 +45,7 @@ export class SignUp {
       }
       // add user info to cache
       const userInfoForCache = SignUp.prototype.userData(authData, userObjectId);
-      userInfoForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
+      // userInfoForCache.profilePicture = `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${responseUpload.version}/${userObjectId}.jpg`;
       await userCache.saveUserToCache(`${userObjectId}`, `${uId}`, userInfoForCache);
 
       // add user info to database
@@ -53,7 +53,7 @@ export class SignUp {
       omit(userInfoForCache, ['uId', 'username', 'email', 'avatarColor', 'password']);
       userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { value: userInfoForCache });
       // sign jwt token
-      const userJwtToken: string = SignUp.prototype.signJwtToken(authData, userObjectId);
+      const userJwtToken: string = Utils.generateJwtToken({ ...authData, userId: userObjectId });
       req.session = { token: userJwtToken };
       res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', ...authData, token: userJwtToken });
     } catch (error) {
@@ -72,18 +72,6 @@ export class SignUp {
       avatarColor,
       createdAt: new Date()
     } as unknown as IAuthDocument;
-  }
-
-  private signJwtToken(data: IAuthDocument, userObjectId: ObjectId): string {
-    return jwt.sign(
-      {
-        userId: userObjectId,
-        uId: data.uId,
-        username: data.username,
-        avatarColor: data.avatarColor
-      },
-      config.JWT_TOKEN!
-    );
   }
 
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
@@ -107,8 +95,7 @@ export class SignUp {
       notifications: { messages: true, reactions: true, comments: true, follows: true },
       social: { facebook: '', twitter: '', instagram: '', youtube: '' },
       bgImageVersion: '',
-      bgImageId: '',
-      profilePicture: ''
+      bgImageId: ''
     } as unknown as IUserDocument;
   }
 }

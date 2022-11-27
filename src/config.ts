@@ -1,11 +1,7 @@
 import dotenv from 'dotenv';
 import cloudinary from 'cloudinary';
-import { format, createLogger, transports } from 'winston';
-const { combine, timestamp, label, printf } = format;
-const colorizer = format.colorize();
-const customFormat = printf(({ level, message, label, timestamp }) => {
-  return colorizer.colorize(level, `${timestamp} [${label}] : ${message}`);
-});
+import winston, { format } from 'winston';
+
 dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
@@ -40,17 +36,35 @@ class Config {
   }
 
   public createLogger(category: string, level: string = 'debug') {
-    return createLogger({
+    const jsonLogFileFormat = format.combine(format.errors({ stack: true }), format.prettyPrint(), format.label({ label: category }));
+    const logger = winston.createLogger({
       level,
-      format: combine(
-        label({ label: category }),
-        timestamp({
-          format: 'DD-MM-YYYY HH:mm:ss'
-        }),
-        customFormat
-      ),
-      transports: [new transports.Console({})]
+      format: jsonLogFileFormat
     });
+
+    // When running locally, write everything to the console
+    // with proper stacktraces enabled
+    if (this.NODE_ENV !== 'production') {
+      logger.add(
+        new winston.transports.Console({
+          format: format.combine(
+            format.errors({ stack: true }),
+            format.label({ label: category }),
+            format.timestamp({
+              format: 'DD-MM-YYYY HH:mm:ss'
+            }),
+            format.colorize(),
+            format.printf(({ level, message, timestamp, stack, label }) => {
+              if (stack) {
+                return `${timestamp} [${label}] ${level}: ${message} - ${stack}`;
+              }
+              return `${timestamp} [${label}] ${level}: ${message}`;
+            })
+          )
+        })
+      );
+    }
+    return logger;
   }
 
   public cloudinaryConfig(): void {

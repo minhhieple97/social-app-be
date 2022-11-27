@@ -9,6 +9,11 @@ class AuthService {
     const user: IAuthDocument = (await AuthModel.findOne(query).exec()) as IAuthDocument;
     return user;
   }
+  public async getUserByConditional(conditional: object): Promise<IAuthDocument> {
+    console.log({ ...conditional });
+    const user: IAuthDocument = (await AuthModel.findOne({ ...conditional }).exec()) as IAuthDocument;
+    return user;
+  }
   public async createAuthUser(data: IAuthDocument): Promise<void> {
     await AuthModel.create(data);
   }

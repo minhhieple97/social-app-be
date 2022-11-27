@@ -1,3 +1,5 @@
+import jwt from 'jsonwebtoken';
+import { config } from '@root/config';
 export default class Utils {
   static firstLetterUppercase(str: string): string {
     const valueString = str.toLowerCase();
@@ -19,5 +21,15 @@ export default class Utils {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return parseInt(result, 10);
+  }
+
+  static generateJwtToken(payload: object, expiresIn: number | string = '7d'): string {
+    return jwt.sign(
+      {
+        ...payload
+      },
+      config.JWT_TOKEN!,
+      { expiresIn }
+    );
   }
 }

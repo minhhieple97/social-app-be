@@ -33,10 +33,9 @@ authSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
   next();
 });
 
-authSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
+authSchema.methods.comparePassword = async function (password: string, salt: string): Promise<boolean> {
   const hashedPassword: string = (this as unknown as IAuthDocument).password!;
-  const salt: String = (this as unknown as IAuthDocument).salt!;
-  return verify(config.SECRET_KEY + password, hashedPassword, { salt: Buffer.from(salt, 'hex') });
+  return verify(hashedPassword, password + config.SECRET_KEY, { salt: Buffer.from(salt, 'hex') });
 };
 
 authSchema.methods.hashPassword = async function (password: string, salt: String): Promise<string> {
