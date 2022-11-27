@@ -140,7 +140,6 @@ class AuthService {
   }
 
   public async getUserByConditional(conditional: object): Promise<IAuthDocument> {
-    console.log({ ...conditional });
     const user: IAuthDocument = (await AuthModel.findOne({ ...conditional }).exec()) as IAuthDocument;
     return user;
   }
