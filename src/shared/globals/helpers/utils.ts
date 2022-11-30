@@ -32,4 +32,13 @@ export default class Utils {
       { expiresIn }
     );
   }
+
+  static parseJson(str: string) {
+    try {
+      return JSON.parse(str);
+    } catch (error) {
+      console.error(error);
+      return str;
+    }
+  }
 }

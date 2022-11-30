@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import cloudinary from 'cloudinary';
 import winston, { format } from 'winston';
-
+import DailyRotateFile from 'winston-daily-rotate-file';
 dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
@@ -36,8 +36,16 @@ class Config {
   }
 
   public createLogger(category: string, level: string = 'debug') {
+    const transport: DailyRotateFile = new DailyRotateFile({
+      filename: 'logs/%DATE%.log',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '5m',
+      maxFiles: '7d'
+    });
     const jsonLogFileFormat = format.combine(format.errors({ stack: true }), format.prettyPrint(), format.label({ label: category }));
     const logger = winston.createLogger({
+      transports: [transport],
       level,
       format: jsonLogFileFormat
     });
