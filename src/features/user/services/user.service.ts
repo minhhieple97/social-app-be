@@ -39,5 +39,13 @@ class UserService {
       profileImgVersion: 1
     };
   }
+  // public async getUserById(userId: string): Promise<IUserDocument> {
+  //   const users: IUserDocument[] = await UserModel.aggregate([
+  //     { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+  //     { $lookup: { from: 'Auth', localField: 'authId', foreignField: 'id', as: 'authId' } },
+  //     { $unwind: '$authId' }
+  //   ]);
+  //   // return users;
+  // }
 }
 export const userService: UserService = new UserService();
