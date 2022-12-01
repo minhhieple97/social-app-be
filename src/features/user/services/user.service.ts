@@ -39,13 +39,14 @@ class UserService {
       profileImgVersion: 1
     };
   }
-  // public async getUserById(userId: string): Promise<IUserDocument> {
-  //   const users: IUserDocument[] = await UserModel.aggregate([
-  //     { $match: { _id: new mongoose.Types.ObjectId(userId) } },
-  //     { $lookup: { from: 'Auth', localField: 'authId', foreignField: 'id', as: 'authId' } },
-  //     { $unwind: '$authId' }
-  //   ]);
-  //   // return users;
-  // }
+  public async getUserById(userId: string): Promise<IUserDocument> {
+    const users: IUserDocument[] = await UserModel.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+      { $lookup: { from: 'Auth', localField: 'authId', foreignField: 'id', as: 'authId' } },
+      { $unwind: '$authId' },
+      { $project: this.aggregateProject() }
+    ]);
+    return users[0];
+  }
 }
 export const userService: UserService = new UserService();

@@ -1,5 +1,5 @@
 import { IUserDocument } from '@user/interfaces/user.interface';
-import { IAuthDocument, IAuthInput, ISignUpData, ISignUpInput } from '@auth/interfaces/auth.interface';
+import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@auth/interfaces/auth.interface';
 import { AuthModel } from '@auth/schemas/auth.schema';
 import { BadRequestError } from '@global/helpers/error-handler';
 import Utils from '@global/helpers/utils';
@@ -11,7 +11,7 @@ import { omit } from 'lodash';
 import { UploadApiResponse } from 'cloudinary';
 import { uploads } from '@global/helpers/cloudinary-upload';
 import { ObjectId } from 'mongodb';
-import { userCache, UserCache } from '@service/redis/user.cache';
+import { userCache } from '@service/redis/user.cache';
 class AuthService {
   public async read(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; userJwt: string }> {
     const { username, email, password } = authInput;
@@ -145,6 +145,16 @@ class AuthService {
   }
   public async createAuthUser(data: IAuthDocument): Promise<void> {
     await AuthModel.create(data);
+  }
+
+  public async getCurrentUser(currentUser: IAuthPayload): Promise<IUserDocument | null> {
+    let user = null;
+    const cachedUser: IUserDocument = (await userCache.getUserFromCache(`${currentUser.userId}`)) as IUserDocument;
+    const existingUser: IUserDocument = cachedUser ? cachedUser : await userService.getUserById(currentUser.userId);
+    if (Object.keys(existingUser).length > 0) {
+      user = existingUser;
+    }
+    return user;
   }
 }
 export const authService: AuthService = new AuthService();

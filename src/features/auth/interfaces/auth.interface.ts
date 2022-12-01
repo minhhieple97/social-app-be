@@ -6,12 +6,12 @@ import { IUserDocument } from '@user/interfaces/user.interface';
 declare global {
   namespace Express {
     interface Request {
-      currentUser?: AuthPayload;
+      currentUser?: IAuthPayload;
     }
   }
 }
 
-export interface AuthPayload {
+export interface IAuthPayload {
   userId: string;
   uId: string;
   email: string;
