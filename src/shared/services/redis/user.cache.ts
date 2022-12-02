@@ -86,16 +86,16 @@ export class UserCache extends BaseCache {
     }
     const response: IUserDocument = (await this.client.HGETALL(`users:${userId}`)) as unknown as IUserDocument;
     response.createdAt = new Date(Utils.parseJson(`${response.createdAt}`));
-    response.postsCount = Utils.parseJson(`${response.postsCount}`);
+    // response.postsCount = Utils.parseJson(`${response.postsCount}`);
     response.blocked = Utils.parseJson(`${response.blocked}`);
     response.blockedBy = Utils.parseJson(`${response.blockedBy}`);
     response.notifications = Utils.parseJson(`${response.notifications}`);
     response.social = Utils.parseJson(`${response.social}`);
-    response.followersCount = Utils.parseJson(`${response.followersCount}`);
-    response.followingCount = Utils.parseJson(`${response.followingCount}`);
-    response.bgImageId = Utils.parseJson(`${response.bgImageId}`);
-    response.bgImageVersion = Utils.parseJson(`${response.bgImageVersion}`);
-    response.profileImgVersion = Utils.parseJson(`${response.profileImgVersion}`);
+    // response.followersCount = Utils.parseJson(`${response.followersCount}`);
+    // response.followingCount = Utils.parseJson(`${response.followingCount}`);
+    // response.bgImageId = Utils.parseJson(`${response.bgImageId}`);
+    // response.bgImageVersion = Utils.parseJson(`${response.bgImageVersion}`);
+    // response.profileImgVersion = Utils.parseJson(`${response.profileImgVersion}`);
     response.work = Utils.parseJson(`${response.work}`);
     response.school = Utils.parseJson(`${response.school}`);
     response.location = Utils.parseJson(`${response.location}`);
