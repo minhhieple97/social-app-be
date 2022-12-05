@@ -5,7 +5,6 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
-  public JWT_TOKEN: string | undefined;
   public NODE_ENV: string | undefined;
   public SECRET_KEY_COOKIE_1: string | undefined;
   public SECRET_KEY_COOKIE_2: string | undefined;
@@ -16,9 +15,11 @@ class Config {
   public CLOUDINARY_SECRET_KEY: string | undefined;
   public CLOUDINARY_PROJECT_NAME: string | undefined;
   public PEPPER_SECRET: string | undefined;
+  public ACCESS_TOKEN_PRIVATE_KEY: string | undefined;
+  public ACCESS_TOKEN_PUBLIC_KEY: string | undefined;
+  public ACCESS_TOKEN_EXPIRES_IN: string | undefined;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
-    this.JWT_TOKEN = process.env.JWT_TOKEN || 'jwt-token-default';
     this.NODE_ENV = process.env.NODE_ENV || 'development';
     this.SECRET_KEY_COOKIE_1 = process.env.SECRET_KEY_COOKIE_1 || 'SECRET_KEY_COOKIE_1_DEFAULT';
     this.SECRET_KEY_COOKIE_2 = process.env.SECRET_KEY_COOKIE_2 || 'SECRET_KEY_COOKIE_2_DEFAULT';
@@ -27,6 +28,9 @@ class Config {
     this.CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
     this.CLOUDINARY_SECRET_KEY = process.env.CLOUDINARY_SECRET_KEY;
     this.PEPPER_SECRET = process.env.PEPPER_SECRET;
+    this.ACCESS_TOKEN_PRIVATE_KEY = process.env.ACCESS_TOKEN_PRIVATE_KEY;
+    this.ACCESS_TOKEN_PUBLIC_KEY = process.env.ACCESS_TOKEN_PUBLIC_KEY;
+    this.ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN;
   }
 
   public validateConfig() {

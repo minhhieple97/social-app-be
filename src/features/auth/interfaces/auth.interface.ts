@@ -22,7 +22,7 @@ export interface IAuthPayload {
 
 export interface IAuthDocument extends Document {
   _id: string | ObjectId;
-  uId: string;
+  scoreUser: string;
   username: string;
   email: string;
   password?: string;
@@ -37,7 +37,7 @@ export interface IAuthDocument extends Document {
 
 export interface ISignUpData extends Partial<ISignUpInput> {
   _id: ObjectId;
-  uId: string;
+  scoreUser: string;
 }
 
 // export type ISignUpData = Partial<ISignUpInput> & {

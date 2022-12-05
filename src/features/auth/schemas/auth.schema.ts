@@ -3,12 +3,12 @@ import { IAuthDocument } from '@auth/interfaces/auth.interface';
 import { model, Model, Schema } from 'mongoose';
 import crypto from 'crypto';
 import { config } from '@root/config';
-const authSchema: Schema = new Schema(
+const AuthSchema: Schema = new Schema(
   {
-    username: { type: String },
-    uId: { type: String },
-    email: { type: String },
-    password: { type: String },
+    username: { type: String, required: true, index: { unique: true } },
+    scoreUser: { type: String, required: true },
+    email: { type: String, required: true, index: { unique: true } },
+    password: { type: String, required: true },
     salt: { type: String },
     avatarColor: { type: String },
     createdAt: { type: Date, default: Date.now },
@@ -25,22 +25,23 @@ const authSchema: Schema = new Schema(
   }
 );
 
-authSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
+AuthSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
   const salt = crypto.randomBytes(20);
   const hashedPassword: string = await hash(this.password! + config.PEPPER_SECRET, { salt });
   this.salt = salt.toString('hex');
   this.password = hashedPassword;
+  console.log({ salt, hashedPassword });
   next();
 });
 
-authSchema.methods.comparePassword = async function (password: string, salt: string): Promise<boolean> {
+AuthSchema.methods.comparePassword = async function (password: string, salt: string): Promise<boolean> {
   const hashedPassword: string = (this as unknown as IAuthDocument).password!;
   return verify(hashedPassword, password + config.PEPPER_SECRET, { salt: Buffer.from(salt, 'hex') });
 };
 
-authSchema.methods.hashPassword = async function (password: string, salt: String): Promise<string> {
+AuthSchema.methods.hashPassword = async function (password: string, salt: String): Promise<string> {
   return hash(config.PEPPER_SECRET + password, { salt: Buffer.from(salt, 'hex') });
 };
 
-const AuthModel: Model<IAuthDocument> = model<IAuthDocument>('Auth', authSchema, 'Auth');
+const AuthModel: Model<IAuthDocument> = model<IAuthDocument>('Auth', AuthSchema, 'Auth');
 export { AuthModel };

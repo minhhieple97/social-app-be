@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '@root/config';
 export default class Utils {
   static firstLetterUppercase(str: string): string {
@@ -23,14 +23,21 @@ export default class Utils {
     return parseInt(result, 10);
   }
 
-  static generateJwtToken(payload: object, expiresIn: number | string = '7d'): string {
-    return jwt.sign(
-      {
-        ...payload
-      },
-      config.JWT_TOKEN!,
-      { expiresIn }
-    );
+  static generateJwtToken(payload: Object, options: SignOptions = {}): string {
+    const privateKey = Buffer.from(config.ACCESS_TOKEN_PRIVATE_KEY!, 'base64').toString('ascii');
+    return jwt.sign(payload, privateKey, {
+      ...(options && options),
+      algorithm: 'RS256'
+    });
+  }
+
+  static verifyJwtToken<T>(token: string): T | null {
+    try {
+      const publicKey = Buffer.from(config.ACCESS_TOKEN_PUBLIC_KEY!, 'base64').toString('ascii');
+      return jwt.verify(token, publicKey) as T;
+    } catch (error) {
+      return null;
+    }
   }
 
   static parseJson(str: string) {
@@ -39,5 +46,9 @@ export default class Utils {
     } catch (error) {
       return str;
     }
+  }
+
+  static capitalizeFirstLetter(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }

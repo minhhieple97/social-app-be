@@ -31,6 +31,10 @@ export abstract class BaseQueue {
     this.queue.on('global:stalled', (job: Job) => {
       this.logger.info(`Job ${job} is stalled`);
     });
+
+    this.queue.on('global:progress', (job: Job) => {
+      this.logger.info(`${job} is in progress`);
+    });
   }
   protected addJob(name: string, data: IBaseJobData): void {
     this.queue.add(name, data, { attempts: 3, backoff: { type: 'fixed', delay: 5000 } });

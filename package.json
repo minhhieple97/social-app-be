@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",
+    "@types/cookie-parser": "^1.4.3",
     "@types/cookie-session": "^2.0.44",
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.14",
@@ -65,8 +66,10 @@
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
     "@zerollup/ts-transform-paths": "^1.7.18",
+    "cookie-parser": "^1.4.6",
     "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.5.0",
+    "morgan": "^1.10.0",
     "prettier": "^2.7.1",
     "tsc-alias": "^1.7.1",
     "tsconfig-paths": "^4.1.0",

@@ -2,7 +2,7 @@ import { config } from '@root/config';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import mongoose, { model, Model, Schema } from 'mongoose';
 
-const userSchema: Schema = new Schema({
+const UserSchema: Schema = new Schema({
   authId: { type: mongoose.Schema.Types.ObjectId, ref: 'Auth', index: true },
   postsCount: { type: Number, default: 0 },
   followersCount: { type: Number, default: 0 },
@@ -29,12 +29,12 @@ const userSchema: Schema = new Schema({
   quote: { type: String, default: '' },
   bgImageVersion: { type: String, default: '' },
   bgImageId: { type: String, default: '' },
-  profileImgVersion: { type: String, default: '' }
+  profileImgVersion: { type: Number, default: '' }
 });
 
-userSchema.methods.getProfilePicture = function (): string {
+UserSchema.methods.getProfilePicture = function (): string {
   return `https://res.cloudinary.com/${config.CLOUDINARY_PROJECT_NAME}/image/upload/v${this.profilePictureVersion}/${this._id}.jpg`;
 };
 
-const UserModel: Model<IUserDocument> = model<IUserDocument>('User', userSchema, 'User');
+const UserModel: Model<IUserDocument> = model<IUserDocument>('User', UserSchema, 'User');
 export { UserModel };

@@ -1,3 +1,4 @@
+import { config } from '@root/config';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@auth/interfaces/auth.interface';
 import { AuthModel } from '@auth/schemas/auth.schema';
@@ -13,6 +14,70 @@ import { uploads } from '@global/helpers/cloudinary-upload';
 import { ObjectId } from 'mongodb';
 import { userCache } from '@service/redis/user.cache';
 class AuthService {
+  public async create(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; jwtToken: string }> {
+    const { username, password, email, avatarColor, avatarImage } = signUpInput;
+    const authObjectId: ObjectId = new ObjectId();
+    const userObjectId: ObjectId = new ObjectId();
+    const scoreUser = Utils.generateRandomIntegers(12);
+    const authData: IAuthDocument = AuthService.prototype.signUpData({
+      _id: authObjectId,
+      scoreUser: `${scoreUser}`,
+      username,
+      email,
+      password,
+      avatarColor
+    });
+
+    try {
+      await AuthModel.create(authData);
+    } catch (error: any) {
+      if (error.code === 11000) {
+        const [key] = Object.keys(error.keyValue);
+        const [value] = Object.values(error.keyValue);
+        throw new BadRequestError(`${Utils.capitalizeFirstLetter(key)} ${value} already exists, please choose a different ${key}`);
+      }
+      throw error;
+    }
+
+    // const checkUserExists: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
+    // create auth document
+    // create user document
+    // store info user to redis (add to queue)
+    // if (checkUserExists) {
+    //   throw new BadRequestError('Invalid credentials');
+    // }
+
+    const responseUpload: UploadApiResponse = (await uploads(avatarImage, userObjectId.toString(), true, true)) as UploadApiResponse;
+
+    if (!responseUpload.public_id) {
+      throw new BadRequestError('File upload: Error occurred while uploading, please try again');
+    }
+    // add user info to cache
+    const userInfoForCache = AuthService.prototype.userData(authData, userObjectId);
+    userInfoForCache.profileImgVersion = responseUpload.version;
+    await userCache.saveUserToCache(`${userObjectId}`, `${scoreUser}`, userInfoForCache);
+
+    // add user info to database
+    authQueue.addAuthUserJob(QUEUE.ADD_AUTH_USER_TO_DB, { value: authData });
+    omit(userInfoForCache, ['scoreUser', 'username', 'email', 'avatarColor', 'password']);
+    userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { value: userInfoForCache });
+    // sign jwt token
+    const payloadJwtToken = {
+      userId: userObjectId,
+      uId: authData.scoreUser,
+      email: authData.email,
+      username: authData.username,
+      avatarColor: authData.avatarColor
+    };
+    const jwtToken: string = Utils.generateJwtToken(
+      { ...payloadJwtToken },
+      {
+        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
+      }
+    );
+    return { userInfo: userInfoForCache, jwtToken };
+  }
+
   public async read(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; userJwt: string }> {
     const { username, email, password } = authInput;
     let userAuthInfo: IAuthDocument | null = null;
@@ -31,76 +96,39 @@ class AuthService {
     }
     const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
 
-    const userJwt = Utils.generateJwtToken({
-      userId: user._id,
-      uId: userAuthInfo.uId,
-      username: userAuthInfo.username,
-      email: userAuthInfo.email,
-      avatarColor: userAuthInfo.avatarColor
-    });
+    const userJwt = Utils.generateJwtToken(
+      {
+        userId: user._id,
+        uId: userAuthInfo.scoreUser,
+        username: userAuthInfo.username,
+        email: userAuthInfo.email,
+        avatarColor: userAuthInfo.avatarColor
+      },
+      {
+        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
+      }
+    );
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
       username: userAuthInfo.username,
       email: userAuthInfo.email,
       avatarColor: userAuthInfo.avatarColor,
-      uId: userAuthInfo.uId,
+      scoreUser: userAuthInfo.scoreUser,
       createdAt: userAuthInfo.createdAt
     } as IUserDocument;
     return { userDocumet, userJwt };
   }
-  public async create(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; jwtToken: string }> {
-    const { username, password, email, avatarColor, avatarImage } = signUpInput;
-    const checkUserExists: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
-    if (checkUserExists) {
-      throw new BadRequestError('Invalid credentials');
-    }
-    const authObjectId: ObjectId = new ObjectId();
-    const userObjectId: ObjectId = new ObjectId();
-    const uId = Utils.generateRandomIntegers(12);
-    const authData: IAuthDocument = AuthService.prototype.signUpData({
-      _id: authObjectId,
-      uId: `${uId}`,
-      username,
-      email,
-      password,
-      avatarColor
-    });
-    const responseUpload: UploadApiResponse = (await uploads(avatarImage, userObjectId.toString(), true, true)) as UploadApiResponse;
-
-    if (!responseUpload.public_id) {
-      throw new BadRequestError('File upload: Error occurred while uploading, please try again');
-    }
-    // add user info to cache
-    const userInfoForCache = AuthService.prototype.userData(authData, userObjectId);
-    userInfoForCache.profileImgVersion = responseUpload.version;
-    await userCache.saveUserToCache(`${userObjectId}`, `${uId}`, userInfoForCache);
-
-    // add user info to database
-    authQueue.addAuthUserJob(QUEUE.ADD_AUTH_USER_TO_DB, { value: authData });
-    omit(userInfoForCache, ['uId', 'username', 'email', 'avatarColor', 'password']);
-    userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { value: userInfoForCache });
-    // sign jwt token
-    const payloadJwtToken = {
-      userId: userObjectId,
-      uId: authData.uId,
-      email: authData.email,
-      username: authData.username,
-      avatarColor: authData.avatarColor
-    };
-    const jwtToken: string = Utils.generateJwtToken({ ...payloadJwtToken });
-    return { userInfo: userInfoForCache, jwtToken };
-  }
 
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
-    const { _id, username, email, uId, avatarColor } = data;
+    const { _id, username, email, scoreUser, avatarColor } = data;
     return {
       _id: userObjectId,
       authId: _id,
       username: Utils.firstLetterUppercase(username),
       email,
       avatarColor,
-      uId,
+      scoreUser,
       postsCount: 0,
       work: '',
       school: '',
@@ -119,10 +147,10 @@ class AuthService {
   }
 
   private signUpData(data: ISignUpData): IAuthDocument {
-    const { _id, username, email, uId, password, avatarColor } = data;
+    const { _id, username, email, scoreUser, password, avatarColor } = data;
     return {
       _id,
-      uId,
+      scoreUser,
       username: Utils.firstLetterUppercase(username!),
       email: Utils.lowerCase(email!),
       password,
@@ -142,9 +170,6 @@ class AuthService {
   public async getUserByConditional(conditional: object): Promise<IAuthDocument> {
     const user: IAuthDocument = (await AuthModel.findOne({ ...conditional }).exec()) as IAuthDocument;
     return user;
-  }
-  public async createAuthUser(data: IAuthDocument): Promise<void> {
-    await AuthModel.create(data);
   }
 
   public async getCurrentUser(currentUser: IAuthPayload): Promise<IUserDocument | null> {
