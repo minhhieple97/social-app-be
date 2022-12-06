@@ -13,7 +13,12 @@ import { UploadApiResponse } from 'cloudinary';
 import { uploads } from '@global/helpers/cloudinary-upload';
 import { ObjectId } from 'mongodb';
 import { userCache } from '@service/redis/user.cache';
+import { Logger } from 'winston';
 class AuthService {
+  logger: Logger;
+  constructor() {
+    this.logger = config.createLogger('auth.service');
+  }
   public async create(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; jwtToken: string }> {
     const { username, password, email, avatarColor, avatarImage } = signUpInput;
     const authObjectId: ObjectId = new ObjectId();
@@ -36,16 +41,9 @@ class AuthService {
         const [value] = Object.values(error.keyValue);
         throw new BadRequestError(`${Utils.capitalizeFirstLetter(key)} ${value} already exists, please choose a different ${key}`);
       }
+      this.logger.error(error);
       throw error;
     }
-
-    // const checkUserExists: IAuthDocument = await authService.getUserByUsernameOrEmail(username, email);
-    // create auth document
-    // create user document
-    // store info user to redis (add to queue)
-    // if (checkUserExists) {
-    //   throw new BadRequestError('Invalid credentials');
-    // }
 
     const responseUpload: UploadApiResponse = (await uploads(avatarImage, userObjectId.toString(), true, true)) as UploadApiResponse;
 
@@ -54,7 +52,7 @@ class AuthService {
     }
     // add user info to cache
     const userInfoForCache = AuthService.prototype.userData(authData, userObjectId);
-    userInfoForCache.profileImgVersion = responseUpload.version;
+    // userInfoForCache.profileImgVersion = responseUpload.version;
     await userCache.saveUserToCache(`${userObjectId}`, `${scoreUser}`, userInfoForCache);
 
     // add user info to database
