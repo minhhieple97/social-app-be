@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import cloudinary from 'cloudinary';
 import winston, { format } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
+import { CookieOptions } from 'express';
 dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
@@ -17,7 +18,8 @@ class Config {
   public PEPPER_SECRET: string | undefined;
   public ACCESS_TOKEN_PRIVATE_KEY: string | undefined;
   public ACCESS_TOKEN_PUBLIC_KEY: string | undefined;
-  public ACCESS_TOKEN_EXPIRES_IN: string | undefined;
+  public ACCESS_TOKEN_EXPIRES_IN: string | number;
+  public COOKIE_ACCESS_TOKEN_OPTION: CookieOptions;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -30,7 +32,15 @@ class Config {
     this.PEPPER_SECRET = process.env.PEPPER_SECRET;
     this.ACCESS_TOKEN_PRIVATE_KEY = process.env.ACCESS_TOKEN_PRIVATE_KEY;
     this.ACCESS_TOKEN_PUBLIC_KEY = process.env.ACCESS_TOKEN_PUBLIC_KEY;
-    this.ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN;
+    this.ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN!;
+    this.COOKIE_ACCESS_TOKEN_OPTION = {
+      expires: new Date(Date.now() + +this.ACCESS_TOKEN_EXPIRES_IN * 60 * 1000),
+      maxAge: +this.ACCESS_TOKEN_EXPIRES_IN * 60 * 1000,
+      httpOnly: this.NODE_ENV === 'production',
+      sameSite: 'lax',
+      secure: this.NODE_ENV === 'production',
+      signed: this.NODE_ENV === 'production'
+    };
   }
 
   public validateConfig() {

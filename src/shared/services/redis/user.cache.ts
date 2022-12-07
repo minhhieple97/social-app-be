@@ -6,7 +6,7 @@ export class UserCache extends BaseCache {
   constructor() {
     super('user.cache');
   }
-  public async saveUserToCache(key: string, userUId: string, createUser: IUserDocument): Promise<void> {
+  public async saveUserToCache(createUser: IUserDocument): Promise<void> {
     const createdAt = new Date();
     const {
       _id,
@@ -27,7 +27,8 @@ export class UserCache extends BaseCache {
       notifications,
       social,
       bgImageVersion,
-      bgImageId
+      bgImageId,
+      profileImgVersion
     } = createUser;
     const dataUserCache: string[] = [
       '_id',
@@ -69,15 +70,22 @@ export class UserCache extends BaseCache {
       'bgImageVersion',
       `${bgImageVersion}`,
       'bgImageId',
-      `${bgImageId}`
+      `${bgImageId}`,
+      'profileImgVersion',
+      `${profileImgVersion}`
     ];
     try {
       if (!this.client.isOpen) {
         await this.client.connect();
       }
-      await this.client.ZADD('user', { score: parseInt(userUId, 10), value: `${key}` });
-      await this.client.HSET(`users:${key}`, dataUserCache);
-    } catch (error) {}
+      const response = await Promise.allSettled([
+        this.client.ZADD('users_leaderboard', { score: parseInt(scoreUser!, 10), value: `${_id}` }),
+        this.client.HSET(`users:${_id}`, dataUserCache)
+      ]);
+      Utils.handleErrorPromiseAllSettled(response);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   public async getUserFromCache(userId: string): Promise<IUserDocument | null> {

@@ -12,6 +12,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import HTTP_STATUS_CODE from 'http-status-codes';
 import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 import applicationRoutes from '@root/routes';
+import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
 const SERVER_PORT = 8000;
 const logger = config.createLogger('server');
 export class Server {
@@ -27,14 +29,15 @@ export class Server {
     this.startServer(this.app);
   }
   private securityMiddleware(app: Application) {
-    app.use(
-      cookieSession({
-        name: 'session',
-        keys: [config.SECRET_KEY_COOKIE_1!, config.SECRET_KEY_COOKIE_2!],
-        maxAge: 24 * 7 * 3600000,
-        secure: config.NODE_ENV !== 'development'
-      })
-    );
+    // app.use(
+    //   cookieSession({
+    //     name: 'session',
+    //     keys: [config.SECRET_KEY_COOKIE_1!, config.SECRET_KEY_COOKIE_2!],
+    //     maxAge: 24 * 7 * 3600000,
+    //     secure: config.NODE_ENV !== 'development'
+    //   })
+    // );
+    app.use(cookieParser());
     app.use(hpp());
     app.use(helmet());
     app.use(
@@ -49,6 +52,7 @@ export class Server {
 
   private standardMiddleware(app: Application) {
     app.use(compression());
+    if (config.NODE_ENV === 'development') app.use(morgan('dev'));
     app.use(json({ limit: '50mb' }));
     app.use(urlencoded({ extended: true, limit: '50mb' }));
   }
@@ -58,6 +62,12 @@ export class Server {
   }
 
   private globalErrorHandler(app: Application): void {
+    app.get('/health-checker', (req: Request, res: Response, next: NextFunction) => {
+      res.status(200).json({
+        status: 'success',
+        message: 'Welcome to Social application'
+      });
+    });
     app.all('*', (req: Request, res: Response) => {
       res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
     });

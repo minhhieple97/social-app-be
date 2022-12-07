@@ -1,3 +1,4 @@
+import { config } from '@root/config';
 import { signinSchema } from '@auth/validations/signin.validation';
 import { joiValidation } from '@global/decorators/joi-validation.decorator';
 import { Request, Response, NextFunction } from 'express';
@@ -29,8 +30,12 @@ export class AuthController {
   public async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { jwtToken, userInfo } = await authService.create(req.body);
-      req.session = { token: jwtToken };
-      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, token: jwtToken });
+      res.cookie('accessToken', jwtToken, config.COOKIE_ACCESS_TOKEN_OPTION);
+      res.cookie('loggedIn', true, {
+        ...config.COOKIE_ACCESS_TOKEN_OPTION,
+        httpOnly: false
+      });
+      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, accessToken: jwtToken });
     } catch (error) {
       next(error);
     }

@@ -30,7 +30,6 @@ AuthSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
   const hashedPassword: string = await hash(this.password! + config.PEPPER_SECRET, { salt });
   this.salt = salt.toString('hex');
   this.password = hashedPassword;
-  console.log({ salt, hashedPassword });
   next();
 });
 

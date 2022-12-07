@@ -45,20 +45,12 @@ class AuthService {
       throw error;
     }
 
-    const responseUpload: UploadApiResponse = (await uploads(avatarImage, userObjectId.toString(), true, true)) as UploadApiResponse;
-
-    if (!responseUpload.public_id) {
-      throw new BadRequestError('File upload: Error occurred while uploading, please try again');
-    }
-    // add user info to cache
+    // generate user info to cache
     const userInfoForCache = AuthService.prototype.userData(authData, userObjectId);
-    // userInfoForCache.profileImgVersion = responseUpload.version;
-    await userCache.saveUserToCache(`${userObjectId}`, `${scoreUser}`, userInfoForCache);
 
-    // add user info to database
-    authQueue.addAuthUserJob(QUEUE.ADD_AUTH_USER_TO_DB, { value: authData });
     omit(userInfoForCache, ['scoreUser', 'username', 'email', 'avatarColor', 'password']);
-    userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { value: userInfoForCache });
+    // add user info to mongodb,redis && upload image
+    userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { userInfo: userInfoForCache, avatarImage });
     // sign jwt token
     const payloadJwtToken = {
       userId: userObjectId,
@@ -119,10 +111,10 @@ class AuthService {
   }
 
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
-    const { _id, username, email, scoreUser, avatarColor } = data;
+    const { _id: authId, username, email, scoreUser, avatarColor } = data;
     return {
       _id: userObjectId,
-      authId: _id,
+      authId,
       username: Utils.firstLetterUppercase(username),
       email,
       avatarColor,

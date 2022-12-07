@@ -51,4 +51,13 @@ export default class Utils {
   static capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
+
+  static handleErrorPromiseAllSettled(listRes: any): void {
+    for (let i = 0; i < listRes.length; i++) {
+      const response = listRes[i];
+      if (response.status! === 'rejected') {
+        throw response.reason!;
+      }
+    }
+  }
 }
