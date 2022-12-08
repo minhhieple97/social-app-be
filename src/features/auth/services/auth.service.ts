@@ -1,5 +1,5 @@
 import { config } from '@root/config';
-import { IUserDocument } from '@user/interfaces/user.interface';
+import { IPayloadJwt, IUserDocument } from '@user/interfaces/user.interface';
 import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@auth/interfaces/auth.interface';
 import { AuthModel } from '@auth/schemas/auth.schema';
 import { BadRequestError } from '@global/helpers/error-handler';
@@ -14,12 +14,13 @@ import { uploads } from '@global/helpers/cloudinary-upload';
 import { ObjectId } from 'mongodb';
 import { userCache } from '@service/redis/user.cache';
 import { Logger } from 'winston';
+import { redisConnection } from '@service/redis/redis.connection';
 class AuthService {
   logger: Logger;
   constructor() {
     this.logger = config.createLogger('auth.service');
   }
-  public async create(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; jwtToken: string }> {
+  public async signup(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; accessToken: string }> {
     const { username, password, email, avatarColor, avatarImage } = signUpInput;
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
@@ -59,16 +60,16 @@ class AuthService {
       username: authData.username,
       avatarColor: authData.avatarColor
     };
-    const jwtToken: string = Utils.generateJwtToken(
+    const accessToken: string = Utils.generateJwtToken(
       { ...payloadJwtToken },
       {
         expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
       }
     );
-    return { userInfo: userInfoForCache, jwtToken };
+    return { userInfo: userInfoForCache, accessToken };
   }
 
-  public async read(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; userJwt: string }> {
+  public async login(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; accessToken: string }> {
     const { username, email, password } = authInput;
     let userAuthInfo: IAuthDocument | null = null;
     if (username) {
@@ -85,19 +86,7 @@ class AuthService {
       throw new BadRequestError('Invalid credentials');
     }
     const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
-
-    const userJwt = Utils.generateJwtToken(
-      {
-        userId: user._id,
-        uId: userAuthInfo.scoreUser,
-        username: userAuthInfo.username,
-        email: userAuthInfo.email,
-        avatarColor: userAuthInfo.avatarColor
-      },
-      {
-        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
-      }
-    );
+    const accessToken = await this.signToken(user);
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
@@ -107,9 +96,32 @@ class AuthService {
       scoreUser: userAuthInfo.scoreUser,
       createdAt: userAuthInfo.createdAt
     } as IUserDocument;
-    return { userDocumet, userJwt };
+    return { userDocumet, accessToken };
   }
 
+  private async signToken(user: IUserDocument): Promise<string> {
+    // Sign the access token
+    const accessToken = Utils.generateJwtToken(
+      {
+        userId: user._id,
+        uId: user.scoreUser,
+        username: user.username,
+        email: user.email,
+        avatarColor: user.avatarColor
+      },
+      {
+        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
+      }
+    );
+
+    // Create a Session
+    await redisConnection.client.set(user._id.toString(), JSON.stringify(user), {
+      EX: 60 * 60
+    });
+
+    // Return access token
+    return accessToken;
+  }
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
     const { _id: authId, username, email, scoreUser, avatarColor } = data;
     return {

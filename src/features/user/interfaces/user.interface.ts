@@ -92,3 +92,11 @@ export interface IAllUsers {
   users: IUserDocument[];
   totalUsers: number;
 }
+
+export interface IPayloadJwt {
+  userId: string;
+  uId: string;
+  username: string;
+  email: string;
+  avatarColor: string;
+}
