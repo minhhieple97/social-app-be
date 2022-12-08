@@ -8,9 +8,9 @@ class AuthRoutes {
     this.router = express.Router();
   }
   public routes(): Router {
-    this.router.post('/signup', AuthController.prototype.create);
-    this.router.post('/signin', AuthController.prototype.read);
-    this.router.post('/signout', AuthController.prototype.update);
+    this.router.post('/signup', AuthController.prototype.signup);
+    this.router.post('/login', AuthController.prototype.login);
+    this.router.post('/logout', AuthController.prototype.logout);
     this.router.get('/current-user', AuthMiddleware.prototype.authentication, AuthController.prototype.getCurrentUser);
     return this.router;
   }

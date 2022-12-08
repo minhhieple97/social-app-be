@@ -21,7 +21,10 @@ class UserWorker extends BaseWorker {
       }
       // add user to leaderboard (sorted set) && add user to HSET && add user to mongodb
       userInfo.profileImgVersion = responseUpload.version;
-      const resultInsert = await Promise.allSettled([userCache.saveUserToCache(userInfo), userService.createUser(userInfo)]);
+      const resultInsert = (await Promise.allSettled([userCache.saveUserToCache(userInfo), userService.createUser(userInfo)])) as {
+        status: 'fulfilled' | 'rejected';
+        value: any;
+      }[];
       Utils.handleErrorPromiseAllSettled(resultInsert);
       done(null, job.data);
     } catch (error) {

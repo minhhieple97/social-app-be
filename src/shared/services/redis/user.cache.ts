@@ -79,7 +79,7 @@ export class UserCache extends BaseCache {
         await this.client.connect();
       }
       const response = await Promise.allSettled([
-        this.client.ZADD('users_leaderboard', { score: parseInt(scoreUser!, 10), value: `${_id}` }),
+        this.client.ZADD('leaderboard', { score: parseInt(scoreUser!, 10), value: `${_id}` }),
         this.client.HSET(`users:${_id}`, dataUserCache)
       ]);
       Utils.handleErrorPromiseAllSettled(response);

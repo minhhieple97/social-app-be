@@ -7,7 +7,7 @@ import { authService } from '@auth/services/auth.service';
 import { signupSchema } from '@auth/validations/signup.validation';
 export class AuthController {
   @joiValidation(signinSchema)
-  public async read(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userDocumet, userJwt } = await authService.read(req.body);
       req.session = { token: userJwt };
@@ -17,7 +17,7 @@ export class AuthController {
     }
   }
 
-  public async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       req.session = null;
       res.status(HTTP_STATUS_CODE.OK).json({ message: 'Logout successfully', token: null, user: {} });
@@ -27,7 +27,7 @@ export class AuthController {
   }
 
   @joiValidation(signupSchema)
-  public async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  public async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { jwtToken, userInfo } = await authService.create(req.body);
       res.cookie('accessToken', jwtToken, config.COOKIE_ACCESS_TOKEN_OPTION);

@@ -52,11 +52,17 @@ export default class Utils {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  static handleErrorPromiseAllSettled(listRes: any): void {
+  static handleErrorPromiseAllSettled(
+    listRes: {
+      status: 'fulfilled' | 'rejected';
+      value?: any;
+      reason?: Error | null;
+    }[]
+  ): void {
     for (let i = 0; i < listRes.length; i++) {
       const response = listRes[i];
-      if (response.status! === 'rejected') {
-        throw response.reason!;
+      if (response.status === 'rejected') {
+        throw response.reason;
       }
     }
   }
