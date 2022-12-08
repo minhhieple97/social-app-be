@@ -13,7 +13,7 @@ services:
       - mongodb_data:/data/db
 
   redis:
-    image: 'redis:alpine'
+    image: 'redislabs/rejson:latest'
     container_name: redis
     command: redis-server
     ports:
@@ -21,6 +21,7 @@ services:
     volumes:
       - redis-data:/data
       - redis-conf:/usr/local/etc/redis/redis.conf
+    restart: unless-stopped
 volumes:
   redis-data:
   redis-conf:
