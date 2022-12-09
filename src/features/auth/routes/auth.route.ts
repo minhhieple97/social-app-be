@@ -11,7 +11,6 @@ class AuthRoutes {
     this.router.post('/signup', AuthController.prototype.signup);
     this.router.post('/login', AuthController.prototype.login);
     this.router.post('/logout', AuthController.prototype.logout);
-    this.router.get('/current-user', AuthMiddleware.prototype.authentication, AuthController.prototype.getCurrentUser);
     return this.router;
   }
 }

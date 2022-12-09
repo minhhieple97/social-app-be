@@ -44,13 +44,4 @@ export class AuthController {
       next(error);
     }
   }
-
-  public async getCurrentUser(req: Request, res: Response, next: NextFunction) {
-    try {
-      const user = await authService.getCurrentUser(req.currentUser!);
-      res.status(HTTP_STATUS_CODE.OK).json({ data: user });
-    } catch (error) {
-      next(error);
-    }
-  }
 }

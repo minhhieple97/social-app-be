@@ -1,18 +1,14 @@
 import { config } from '@root/config';
-import { IPayloadJwt, IUserDocument } from '@user/interfaces/user.interface';
+import { IUserDocument } from '@user/interfaces/user.interface';
 import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@auth/interfaces/auth.interface';
 import { AuthModel } from '@auth/schemas/auth.schema';
 import { BadRequestError } from '@global/helpers/error-handler';
 import Utils from '@global/helpers/utils';
 import { userService } from '@user/services/user.service';
 import { QUEUE } from '@global/constants';
-import { authQueue } from '@service/queues/auth.queue';
 import { userQueue } from '@service/queues/user.queue';
 import { omit } from 'lodash';
-import { UploadApiResponse } from 'cloudinary';
-import { uploads } from '@global/helpers/cloudinary-upload';
 import { ObjectId } from 'mongodb';
-import { userCache } from '@service/redis/user.cache';
 import { Logger } from 'winston';
 import { redisConnection } from '@service/redis/redis.connection';
 class AuthService {
@@ -24,10 +20,10 @@ class AuthService {
     const { username, password, email, avatarColor, avatarImage } = signUpInput;
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
-    const scoreUser = Utils.generateRandomIntegers(12);
+    const score = Utils.generateRandomIntegers(12);
     const authData: IAuthDocument = AuthService.prototype.signUpData({
       _id: authObjectId,
-      scoreUser: `${scoreUser}`,
+      score: `${score}`,
       username,
       email,
       password,
@@ -49,23 +45,18 @@ class AuthService {
     // generate user info to cache
     const userInfoForCache = AuthService.prototype.userData(authData, userObjectId);
 
-    omit(userInfoForCache, ['scoreUser', 'username', 'email', 'avatarColor', 'password']);
+    omit(userInfoForCache, ['score', 'username', 'email', 'avatarColor', 'password']);
     // add user info to mongodb,redis && upload image
     userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { userInfo: userInfoForCache, avatarImage });
     // sign jwt token
     const payloadJwtToken = {
-      userId: userObjectId,
-      uId: authData.scoreUser,
+      userId: userObjectId.toString(),
+      score: authData.score,
       email: authData.email,
       username: authData.username,
       avatarColor: authData.avatarColor
     };
-    const accessToken: string = Utils.generateJwtToken(
-      { ...payloadJwtToken },
-      {
-        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
-      }
-    );
+    const accessToken: string = await this.signToken(payloadJwtToken);
     return { userInfo: userInfoForCache, accessToken };
   }
 
@@ -86,28 +77,31 @@ class AuthService {
       throw new BadRequestError('Invalid credentials');
     }
     const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
-    const accessToken = await this.signToken(user);
+    const payloadJwtToken = {
+      userId: user._id.toString(),
+      score: user.score!,
+      email: userAuthInfo.email,
+      username: userAuthInfo.username,
+      avatarColor: userAuthInfo.avatarColor
+    };
+    const accessToken = await this.signToken(payloadJwtToken);
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
       username: userAuthInfo.username,
       email: userAuthInfo.email,
       avatarColor: userAuthInfo.avatarColor,
-      scoreUser: userAuthInfo.scoreUser,
+      score: userAuthInfo.score,
       createdAt: userAuthInfo.createdAt
     } as IUserDocument;
     return { userDocumet, accessToken };
   }
 
-  private async signToken(user: IUserDocument): Promise<string> {
+  private async signToken(user: IAuthPayload): Promise<string> {
     // Sign the access token
     const accessToken = Utils.generateJwtToken(
       {
-        userId: user._id,
-        uId: user.scoreUser,
-        username: user.username,
-        email: user.email,
-        avatarColor: user.avatarColor
+        sub: user.userId
       },
       {
         expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
@@ -115,7 +109,7 @@ class AuthService {
     );
 
     // Create a Session
-    await redisConnection.client.set(user._id.toString(), JSON.stringify(user), {
+    await redisConnection.client.set(user.userId, JSON.stringify(user), {
       EX: 60 * 60
     });
 
@@ -123,14 +117,14 @@ class AuthService {
     return accessToken;
   }
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
-    const { _id: authId, username, email, scoreUser, avatarColor } = data;
+    const { _id: authId, username, email, score, avatarColor } = data;
     return {
       _id: userObjectId,
       authId,
       username: Utils.firstLetterUppercase(username),
       email,
       avatarColor,
-      scoreUser,
+      score,
       postsCount: 0,
       work: '',
       school: '',
@@ -149,10 +143,10 @@ class AuthService {
   }
 
   private signUpData(data: ISignUpData): IAuthDocument {
-    const { _id, username, email, scoreUser, password, avatarColor } = data;
+    const { _id, username, email, score, password, avatarColor } = data;
     return {
       _id,
-      scoreUser,
+      score,
       username: Utils.firstLetterUppercase(username!),
       email: Utils.lowerCase(email!),
       password,
@@ -171,16 +165,6 @@ class AuthService {
 
   public async getUserByConditional(conditional: object): Promise<IAuthDocument> {
     const user: IAuthDocument = (await AuthModel.findOne({ ...conditional }).exec()) as IAuthDocument;
-    return user;
-  }
-
-  public async getCurrentUser(currentUser: IAuthPayload): Promise<IUserDocument | null> {
-    let user = null;
-    const cachedUser: IUserDocument = (await userCache.getUserFromCache(`${currentUser.userId}`)) as IUserDocument;
-    const existingUser: IUserDocument = cachedUser ? cachedUser : await userService.getUserById(currentUser.userId);
-    if (Object.keys(existingUser).length > 0) {
-      user = existingUser;
-    }
     return user;
   }
 }

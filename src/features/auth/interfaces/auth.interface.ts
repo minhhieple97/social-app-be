@@ -6,14 +6,14 @@ import { IUserDocument } from '@user/interfaces/user.interface';
 declare global {
   namespace Express {
     interface Request {
-      currentUser?: IAuthPayload;
+      user?: IAuthPayload;
     }
   }
 }
 
 export interface IAuthPayload {
   userId: string;
-  uId: string;
+  score: string;
   email: string;
   username: string;
   avatarColor: string;
@@ -22,7 +22,7 @@ export interface IAuthPayload {
 
 export interface IAuthDocument extends Document {
   _id: string | ObjectId;
-  scoreUser: string;
+  score: string;
   username: string;
   email: string;
   password?: string;
@@ -37,7 +37,7 @@ export interface IAuthDocument extends Document {
 
 export interface ISignUpData extends Partial<ISignUpInput> {
   _id: ObjectId;
-  scoreUser: string;
+  score: string;
 }
 
 // export type ISignUpData = Partial<ISignUpInput> & {

@@ -8,7 +8,7 @@ class UserRoutes {
     this.router = express.Router();
   }
   public routes(): Router {
-    this.router.get('/me', AuthMiddleware.prototype.authentication, UserController.prototype.getCurrentUser);
+    this.router.get('/me', AuthMiddleware.prototype.deserializeUser, UserController.prototype.getCurrentUser);
     return this.router;
   }
 }

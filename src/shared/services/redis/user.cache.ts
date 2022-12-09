@@ -8,13 +8,13 @@ export class UserCache extends BaseCache {
   }
   public async saveUserToCache(createUser: IUserDocument): Promise<void> {
     const createdAt = new Date();
-    const { _id, scoreUser } = createUser;
+    const { _id, score } = createUser;
     try {
       if (!this.client.isOpen) {
         await this.client.connect();
       }
       const response = await Promise.allSettled([
-        this.client.ZADD('leaderboard', { score: parseInt(scoreUser!, 10), value: `${_id}` }),
+        this.client.ZADD('leaderboard', { score: parseInt(score!, 10), value: `${_id}` }),
         this.client.json.set(`users:${_id}`, '.', { ...createUser, createdAt } as any)
       ]);
       Utils.handleErrorPromiseAllSettled(response);

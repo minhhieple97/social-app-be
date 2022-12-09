@@ -6,7 +6,7 @@ import { config } from '@root/config';
 const AuthSchema: Schema = new Schema(
   {
     username: { type: String, required: true, index: { unique: true } },
-    scoreUser: { type: String, required: true },
+    score: { type: String, required: true },
     email: { type: String, required: true, index: { unique: true } },
     password: { type: String, required: true },
     salt: { type: String },

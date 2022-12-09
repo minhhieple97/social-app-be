@@ -1,3 +1,5 @@
+import { IAuthPayload } from '@auth/interfaces/auth.interface';
+import { userCache } from '@service/redis/user.cache';
 import { IUserDocument } from '@user/interfaces/user.interface';
 import { UserModel } from '@user/schemas/user.schema';
 import mongoose from 'mongoose';
@@ -47,6 +49,16 @@ class UserService {
       { $project: this.aggregateProject() }
     ]);
     return users[0];
+  }
+
+  public async getCurrentUser(currentUser: IAuthPayload): Promise<IUserDocument | null> {
+    let user = null;
+    const cachedUser: IUserDocument = (await userCache.getUserFromCache(`${currentUser.userId}`)) as IUserDocument;
+    const existingUser: IUserDocument = cachedUser ? cachedUser : await userService.getUserById(currentUser.userId);
+    if (Object.keys(existingUser).length > 0) {
+      user = existingUser;
+    }
+    return user;
   }
 }
 export const userService: UserService = new UserService();
