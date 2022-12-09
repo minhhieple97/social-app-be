@@ -11,3 +11,5 @@
 - Setup redis
 
 * To access redis container try: docker exec -it redis /bin/sh => redis-cli
+
+* To rebuild image: docker-compose up -d --force-recreate

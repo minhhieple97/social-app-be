@@ -4,85 +4,19 @@ import { BaseCache } from './base.cache';
 
 export class UserCache extends BaseCache {
   constructor() {
-    super('user.cache');
+    super('user');
   }
   public async saveUserToCache(createUser: IUserDocument): Promise<void> {
     const createdAt = new Date();
-    const {
-      _id,
-      authId,
-      username,
-      email,
-      avatarColor,
-      scoreUser,
-      postsCount,
-      work,
-      school,
-      quote,
-      location,
-      blocked,
-      blockedBy,
-      followersCount,
-      followingCount,
-      notifications,
-      social,
-      bgImageVersion,
-      bgImageId,
-      profileImgVersion
-    } = createUser;
-    const dataUserCache: string[] = [
-      '_id',
-      `${_id}`,
-      'scoreUser',
-      `${scoreUser}`,
-      'authId',
-      `${authId}`,
-      'username',
-      `${username}`,
-      'email',
-      `${email}`,
-      'avatarColor',
-      `${avatarColor}`,
-      'createdAt',
-      `${createdAt}`,
-      'postsCount',
-      `${postsCount}`,
-      'work',
-      `${work}`,
-      'blocked',
-      `${JSON.stringify(blocked)}`,
-      'blockedBy',
-      `${JSON.stringify(blockedBy)}`,
-      'followersCount',
-      `${followersCount}`,
-      'followingCount',
-      `${followingCount}`,
-      'notifications',
-      `${JSON.stringify(notifications)}`,
-      'social',
-      `${JSON.stringify(social)}`,
-      'location',
-      `${location}`,
-      'school',
-      `${school}`,
-      'quote',
-      `${quote}`,
-      'bgImageVersion',
-      `${bgImageVersion}`,
-      'bgImageId',
-      `${bgImageId}`,
-      'profileImgVersion',
-      `${profileImgVersion}`
-    ];
+    const { _id, scoreUser } = createUser;
     try {
       if (!this.client.isOpen) {
         await this.client.connect();
       }
       const response = await Promise.allSettled([
         this.client.ZADD('leaderboard', { score: parseInt(scoreUser!, 10), value: `${_id}` }),
-        this.client.json.set(`users:${_id}`, '.', JSON.stringify(createUser))
+        this.client.json.set(`users:${_id}`, '.', { ...createUser, createdAt } as any)
       ]);
-      console.log(response);
       Utils.handleErrorPromiseAllSettled(response);
     } catch (error) {
       this.logger.error(error);

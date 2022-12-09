@@ -7,7 +7,7 @@ export abstract class BaseCache {
   logger: Logger;
   constructor(cacheName: string) {
     this.client = createClient({ url: config.REDIS_HOST });
-    this.logger = config.createLogger(cacheName);
+    this.logger = config.createLogger(`${cacheName}.cache`);
     this.cacheError();
   }
   private cacheError(): void {
