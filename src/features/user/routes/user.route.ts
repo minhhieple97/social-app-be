@@ -1,5 +1,5 @@
-import { UserController } from '@user/controllers/user.controller';
-import { AuthMiddleware } from '@auth/middlewares/auth.middleware';
+import { authMiddleware } from '@auth/middlewares/auth.middleware';
+import { userController } from '@user/controllers/user.controller';
 import express, { Router } from 'express';
 
 class UserRoutes {
@@ -8,7 +8,7 @@ class UserRoutes {
     this.router = express.Router();
   }
   public routes(): Router {
-    this.router.get('/me', AuthMiddleware.prototype.deserializeUser, UserController.prototype.getCurrentUser);
+    this.router.get('/me', authMiddleware.deserializeUser, userController.getCurrentUser);
     return this.router;
   }
 }

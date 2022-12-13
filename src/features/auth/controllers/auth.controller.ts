@@ -5,17 +5,17 @@ import { Request, Response, NextFunction } from 'express';
 import HTTP_STATUS_CODE from 'http-status-codes';
 import { authService } from '@auth/services/auth.service';
 import { signupSchema } from '@auth/validations/signup.validation';
-export class AuthController {
+class AuthController {
   @joiValidation(signinSchema)
   public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userDocumet, accessToken } = await authService.login(req.body);
-      res.cookie('accessToken', accessToken, config.COOKIE_ACCESS_TOKEN_OPTION);
+      const { userDocumet, accessToken: access_token } = await authService.login(req.body);
+      res.cookie('access_token', access_token, config.COOKIE_ACCESS_TOKEN_OPTION);
       res.cookie('loggedIn', true, {
         ...config.COOKIE_ACCESS_TOKEN_OPTION,
         httpOnly: false
       });
-      res.status(HTTP_STATUS_CODE.OK).json({ message: 'User login successfully', data: { ...userDocumet }, accessToken });
+      res.status(HTTP_STATUS_CODE.OK).json({ message: 'User login successfully', data: { ...userDocumet }, access_token });
     } catch (error) {
       next(error);
     }
@@ -33,15 +33,16 @@ export class AuthController {
   @joiValidation(signupSchema)
   public async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { accessToken, userInfo } = await authService.signup(req.body);
-      res.cookie('accessToken', accessToken, config.COOKIE_ACCESS_TOKEN_OPTION);
+      const { accessToken: access_token, userInfo } = await authService.signup(req.body);
+      res.cookie('access_token', access_token, config.COOKIE_ACCESS_TOKEN_OPTION);
       res.cookie('loggedIn', true, {
         ...config.COOKIE_ACCESS_TOKEN_OPTION,
         httpOnly: false
       });
-      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, accessToken });
+      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, access_token });
     } catch (error) {
       next(error);
     }
   }
 }
+export const authController: AuthController = new AuthController();

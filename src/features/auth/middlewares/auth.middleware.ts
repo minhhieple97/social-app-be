@@ -4,7 +4,7 @@ import { UnAuthorizedError } from '@global/helpers/error-handler';
 import { NextFunction, Request, Response } from 'express';
 import { redisConnection } from '@service/redis/redis.connection';
 
-export class AuthMiddleware {
+class AuthMiddleware {
   public async deserializeUser(req: Request, _res: Response, next: NextFunction): Promise<void> {
     try {
       let accessToken;
@@ -31,7 +31,6 @@ export class AuthMiddleware {
 
       // Check if user has a valid session
       const rawUser = await redisConnection.client.get(decoded.sub);
-
       if (!rawUser) {
         return next(new UnAuthorizedError(`User session has expired`));
       }
@@ -60,3 +59,4 @@ export class AuthMiddleware {
     }
   }
 }
+export const authMiddleware: AuthMiddleware = new AuthMiddleware();

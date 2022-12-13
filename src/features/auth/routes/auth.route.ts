@@ -1,5 +1,4 @@
-import { AuthController } from '@auth/controllers/auth.controller';
-import { AuthMiddleware } from '@auth/middlewares/auth.middleware';
+import { authController } from '@auth/controllers/auth.controller';
 import express, { Router } from 'express';
 
 class AuthRoutes {
@@ -8,9 +7,9 @@ class AuthRoutes {
     this.router = express.Router();
   }
   public routes(): Router {
-    this.router.post('/signup', AuthController.prototype.signup);
-    this.router.post('/login', AuthController.prototype.login);
-    this.router.post('/logout', AuthController.prototype.logout);
+    this.router.post('/signup', authController.signup);
+    this.router.post('/login', authController.login);
+    this.router.post('/logout', authController.logout);
     return this.router;
   }
 }
