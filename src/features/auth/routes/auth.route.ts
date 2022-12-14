@@ -1,3 +1,4 @@
+import { authMiddleware } from './../middlewares/auth.middleware';
 import { authController } from '@auth/controllers/auth.controller';
 import express, { Router } from 'express';
 
@@ -9,7 +10,7 @@ class AuthRoutes {
   public routes(): Router {
     this.router.post('/signup', authController.signup);
     this.router.post('/login', authController.login);
-    this.router.post('/logout', authController.logout);
+    this.router.post('/logout', authMiddleware.deserializeUser, authMiddleware.checkAuthentication, authController.logout);
     return this.router;
   }
 }

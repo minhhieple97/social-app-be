@@ -11,12 +11,13 @@ import { omit } from 'lodash';
 import { ObjectId } from 'mongodb';
 import { Logger } from 'winston';
 import { redisConnection } from '@service/redis/redis.connection';
+import { Request, Response } from 'express';
 class AuthService {
   logger: Logger;
   constructor() {
     this.logger = config.createLogger('auth.service');
   }
-  public async signup(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; accessToken: string }> {
+  public async signup(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; accessToken: string; refreshToken: string }> {
     const { username, password, email, avatarColor, avatarImage } = signUpInput;
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
@@ -56,11 +57,11 @@ class AuthService {
       username: authData.username,
       avatarColor: authData.avatarColor
     };
-    const accessToken: string = await this.signToken(payloadJwtToken);
-    return { userInfo: userInfoForCache, accessToken };
+    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken);
+    return { userInfo: userInfoForCache, accessToken, refreshToken };
   }
 
-  public async login(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; accessToken: string }> {
+  public async login(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; accessToken: string; refreshToken: string }> {
     const { username, email, password } = authInput;
     let userAuthInfo: IAuthDocument | null = null;
     if (username) {
@@ -84,7 +85,7 @@ class AuthService {
       username: userAuthInfo.username,
       avatarColor: userAuthInfo.avatarColor
     };
-    const accessToken = await this.signToken(payloadJwtToken);
+    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken);
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
@@ -94,17 +95,39 @@ class AuthService {
       score: userAuthInfo.score,
       createdAt: userAuthInfo.createdAt
     } as IUserDocument;
-    return { userDocumet, accessToken };
+    return { userDocumet, accessToken, refreshToken };
   }
 
-  private async signToken(user: IAuthPayload): Promise<string> {
+  public async logout(req: Request, res: Response) {
+    // delete key in redis
+    const user = req.user;
+    await redisConnection.client.del(user!.userId);
+    res.cookie('access_token', '', { maxAge: 1 });
+    res.cookie('refresh_token', '', { maxAge: 1 });
+    res.cookie('logged_in', '', {
+      maxAge: 1
+    });
+  }
+
+  private async signToken(user: IAuthPayload): Promise<{ accessToken: string; refreshToken: string }> {
     // Sign the access token
     const accessToken = Utils.generateJwtToken(
+      config.ACCESS_TOKEN_PRIVATE_KEY!,
       {
         sub: user.userId
       },
       {
         expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
+      }
+    );
+
+    const refreshToken = Utils.generateJwtToken(
+      config.REFRESH_TOKEN_PRIVATE_KEY!,
+      {
+        sub: user.userId
+      },
+      {
+        expiresIn: `${config.REFRESH_TOKEN_EXPIRES_IN}m`
       }
     );
 
@@ -114,7 +137,7 @@ class AuthService {
     });
 
     // Return access token
-    return accessToken;
+    return { accessToken, refreshToken };
   }
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {
     const { _id: authId, username, email, score, avatarColor } = data;

@@ -38,6 +38,14 @@ export class BadRequestError extends CustomError {
   }
 }
 
+export class ForbiddenError extends CustomError {
+  statusCode = HTTP_STATUS_CODE.FORBIDDEN;
+  status = 'error';
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export class NotFoundError extends CustomError {
   statusCode = HTTP_STATUS_CODE.NOT_FOUND;
   status = 'error';

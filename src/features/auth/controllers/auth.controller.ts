@@ -5,14 +5,18 @@ import { Request, Response, NextFunction } from 'express';
 import HTTP_STATUS_CODE from 'http-status-codes';
 import { authService } from '@auth/services/auth.service';
 import { signupSchema } from '@auth/validations/signup.validation';
+import Utils from '@global/helpers/utils';
 class AuthController {
   @joiValidation(signinSchema)
   public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userDocumet, accessToken: access_token } = await authService.login(req.body);
-      res.cookie('access_token', access_token, config.COOKIE_ACCESS_TOKEN_OPTION);
-      res.cookie('loggedIn', true, {
-        ...config.COOKIE_ACCESS_TOKEN_OPTION,
+      const { userDocumet, accessToken: access_token, refreshToken: refresh_token } = await authService.login(req.body);
+      const cookieOptionAccessToken = Utils.generateCookieOptionForAuth(+config.ACCESS_TOKEN_EXPIRES_IN!);
+      const cookieOptionRefreshToken = Utils.generateCookieOptionForAuth(+config.REFRESH_TOKEN_EXPIRES_IN!);
+      res.cookie('access_token', access_token, cookieOptionAccessToken);
+      res.cookie('refresh_token', refresh_token, cookieOptionRefreshToken);
+      res.cookie('logged_in', true, {
+        ...cookieOptionAccessToken,
         httpOnly: false
       });
       res.status(HTTP_STATUS_CODE.OK).json({ message: 'User login successfully', data: { ...userDocumet }, access_token });
@@ -23,8 +27,8 @@ class AuthController {
 
   public async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      req.session = null;
-      res.status(HTTP_STATUS_CODE.OK).json({ message: 'Logout successfully', token: null, user: {} });
+      await authService.logout(req, res);
+      res.status(HTTP_STATUS_CODE.OK).json({ message: 'Logout successfully' });
     } catch (error) {
       next(error);
     }
@@ -33,13 +37,16 @@ class AuthController {
   @joiValidation(signupSchema)
   public async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { accessToken: access_token, userInfo } = await authService.signup(req.body);
-      res.cookie('access_token', access_token, config.COOKIE_ACCESS_TOKEN_OPTION);
-      res.cookie('loggedIn', true, {
-        ...config.COOKIE_ACCESS_TOKEN_OPTION,
+      const { accessToken: access_token, refreshToken: refresh_token, userInfo } = await authService.signup(req.body);
+      const cookieOptionAccessToken = Utils.generateCookieOptionForAuth(+config.ACCESS_TOKEN_EXPIRES_IN!);
+      const cookieOptionRefreshToken = Utils.generateCookieOptionForAuth(+config.REFRESH_TOKEN_EXPIRES_IN!);
+      res.cookie('access_token', access_token, cookieOptionAccessToken);
+      res.cookie('refresh_token', refresh_token, cookieOptionRefreshToken);
+      res.cookie('logged_in', true, {
+        ...cookieOptionAccessToken,
         httpOnly: false
       });
-      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, access_token });
+      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, accessToken: access_token });
     } catch (error) {
       next(error);
     }

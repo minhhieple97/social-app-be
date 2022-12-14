@@ -18,8 +18,11 @@ class Config {
   public PEPPER_SECRET: string | undefined;
   public ACCESS_TOKEN_PRIVATE_KEY: string | undefined;
   public ACCESS_TOKEN_PUBLIC_KEY: string | undefined;
-  public ACCESS_TOKEN_EXPIRES_IN: string | number;
-  public COOKIE_ACCESS_TOKEN_OPTION: CookieOptions;
+  public ACCESS_TOKEN_EXPIRES_IN: string | undefined;
+  public REFRESH_TOKEN_PUBLIC_KEY: string | undefined;
+  public REFRESH_TOKEN_PRIVATE_KEY: string | undefined;
+  public REFRESH_TOKEN_EXPIRES_IN: string | undefined;
+  public BASE_COOKIE_OPTION: CookieOptions;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -33,9 +36,10 @@ class Config {
     this.ACCESS_TOKEN_PRIVATE_KEY = process.env.ACCESS_TOKEN_PRIVATE_KEY;
     this.ACCESS_TOKEN_PUBLIC_KEY = process.env.ACCESS_TOKEN_PUBLIC_KEY;
     this.ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN!;
-    this.COOKIE_ACCESS_TOKEN_OPTION = {
-      expires: new Date(Date.now() + +this.ACCESS_TOKEN_EXPIRES_IN * 60 * 1000),
-      maxAge: +this.ACCESS_TOKEN_EXPIRES_IN * 60 * 1000,
+    this.REFRESH_TOKEN_PUBLIC_KEY = process.env.REFRESH_TOKEN_PUBLIC_KEY;
+    this.REFRESH_TOKEN_PRIVATE_KEY = process.env.REFRESH_TOKEN_PRIVATE_KEY;
+    this.REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN;
+    this.BASE_COOKIE_OPTION = {
       httpOnly: this.NODE_ENV === 'production',
       sameSite: 'lax',
       secure: this.NODE_ENV === 'production',

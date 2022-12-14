@@ -1,6 +1,7 @@
+import { config } from '@root/config';
 import Utils from '@global/helpers/utils';
 import { IAuthPayload } from '@auth/interfaces/auth.interface';
-import { UnAuthorizedError } from '@global/helpers/error-handler';
+import { ForbiddenError, UnAuthorizedError } from '@global/helpers/error-handler';
 import { NextFunction, Request, Response } from 'express';
 import { redisConnection } from '@service/redis/redis.connection';
 
@@ -19,7 +20,7 @@ class AuthMiddleware {
       }
 
       // Validate Access Token
-      const decoded = Utils.verifyJwtToken<{ sub: string }>(accessToken);
+      const decoded = Utils.verifyJwtToken<{ sub: string }>(accessToken, config.ACCESS_TOKEN_PUBLIC_KEY!);
 
       if (!decoded) {
         return next(new UnAuthorizedError(`Invalid token or user doesn't exist`));
@@ -58,5 +59,15 @@ class AuthMiddleware {
       next(error);
     }
   }
+
+  //   public async restrictTo(...allowedRoles: string[]) {
+  //     return (req: Request, res: Response, next: NextFunction) => {
+  //       const user = req.user;
+  //       if (!allowedRoles.includes(user.role)) {
+  //         return next(new ForbiddenError('You are not allowed to perform this action'));
+  //       }
+  //       next();
+  //     };
+  //   }
 }
 export const authMiddleware: AuthMiddleware = new AuthMiddleware();

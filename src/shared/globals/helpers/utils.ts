@@ -1,3 +1,4 @@
+import { CookieOptions } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '@root/config';
 export default class Utils {
@@ -23,17 +24,17 @@ export default class Utils {
     return parseInt(result, 10);
   }
 
-  static generateJwtToken(payload: Object, options: SignOptions = {}): string {
-    const privateKey = Buffer.from(config.ACCESS_TOKEN_PRIVATE_KEY!, 'base64').toString('ascii');
+  static generateJwtToken(key: string, payload: Object, options: SignOptions = {}): string {
+    const privateKey = Buffer.from(key, 'base64').toString('ascii');
     return jwt.sign(payload, privateKey, {
       ...(options && options),
       algorithm: 'RS256'
     });
   }
 
-  static verifyJwtToken<T>(token: string): T | null {
+  static verifyJwtToken<T>(token: string, key: string): T | null {
     try {
-      const publicKey = Buffer.from(config.ACCESS_TOKEN_PUBLIC_KEY!, 'base64').toString('ascii');
+      const publicKey = Buffer.from(key, 'base64').toString('ascii');
       return jwt.verify(token, publicKey) as T;
     } catch (error) {
       return null;
@@ -65,5 +66,14 @@ export default class Utils {
         throw response.reason;
       }
     }
+  }
+
+  static generateCookieOptionForAuth(expiresIn: number, options?: CookieOptions): CookieOptions {
+    return {
+      ...config.BASE_COOKIE_OPTION,
+      ...options,
+      expires: new Date(Date.now() + expiresIn * 60 * 1000),
+      maxAge: expiresIn * 60 * 1000
+    };
   }
 }
