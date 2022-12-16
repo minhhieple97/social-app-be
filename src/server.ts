@@ -3,14 +3,13 @@ import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import hpp from 'hpp';
-import cookieSession from 'cookie-session';
 import compression from 'compression';
 import { config } from '@root/config';
 import { Server as ServerSocket } from 'socket.io';
 import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
 import HTTP_STATUS_CODE from 'http-status-codes';
-import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
+import { CustomError, IErrorResponse } from '@globalV1/helpers/error-handler';
 import applicationRoutes from '@root/routes';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
@@ -29,14 +28,6 @@ export class Server {
     this.startServer(this.app);
   }
   private securityMiddleware(app: Application) {
-    // app.use(
-    //   cookieSession({
-    //     name: 'session',
-    //     keys: [config.SECRET_KEY_COOKIE_1!, config.SECRET_KEY_COOKIE_2!],
-    //     maxAge: 24 * 7 * 3600000,
-    //     secure: config.NODE_ENV !== 'development'
-    //   })
-    // );
     app.use(cookieParser());
     app.use(hpp());
     app.use(helmet());
