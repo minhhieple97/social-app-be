@@ -15,8 +15,6 @@ export interface IAuthPayload {
   email: string;
   username: string;
   avatarColor: string;
-  iat?: number;
-  role?: string;
 }
 
 export interface IAuthDocument extends Document {
@@ -56,6 +54,17 @@ export interface IAuthInput {
   email?: string;
   username?: string;
   password: string;
+}
+
+export interface IRefreshToken {
+  userId: string;
+  token: string;
+  createdByIp: string;
+  revoked?: number;
+  revokedByIp?: string;
+  replacedByToken?: string;
+  isActive: boolean;
+  expires?: number;
 }
 
 export interface IAuthJob {

@@ -53,7 +53,7 @@ class UserService {
 
   public async getCurrentUser(currentUser: IAuthPayload): Promise<IUserDocument | null> {
     let user = null;
-    const cachedUser: IUserDocument = (await userCache.getUserFromCache(`${currentUser.userId}`)) as IUserDocument;
+    const cachedUser: IUserDocument = (await userCache.getUserFromCache(`${currentUser.userId}`, '.')) as IUserDocument;
     const existingUser: IUserDocument = cachedUser ? cachedUser : await userService.getUserById(currentUser.userId);
     if (Object.keys(existingUser).length > 0) {
       user = existingUser;

@@ -7,8 +7,7 @@ dotenv.config({});
 class Config {
   public DATABASE_URL: string | undefined;
   public NODE_ENV: string | undefined;
-  public SECRET_KEY_COOKIE_1: string | undefined;
-  public SECRET_KEY_COOKIE_2: string | undefined;
+  public SECRET_KEY_COOKIE: string | undefined;
   public CLIENT_URL: string | undefined;
   public DATABASE_URL_DEFAULT: string | undefined;
   public REDIS_HOST: string | undefined;
@@ -18,16 +17,15 @@ class Config {
   public PEPPER_SECRET: string | undefined;
   public ACCESS_TOKEN_PRIVATE_KEY: string | undefined;
   public ACCESS_TOKEN_PUBLIC_KEY: string | undefined;
-  public ACCESS_TOKEN_EXPIRES_IN: string | undefined;
+  public ACCESS_TOKEN_EXPIRES_IN: number | undefined;
   public REFRESH_TOKEN_PUBLIC_KEY: string | undefined;
   public REFRESH_TOKEN_PRIVATE_KEY: string | undefined;
-  public REFRESH_TOKEN_EXPIRES_IN: string | undefined;
+  public REFRESH_TOKEN_EXPIRES_IN: number | undefined;
   public BASE_COOKIE_OPTION: CookieOptions;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.NODE_ENV = process.env.NODE_ENV || 'development';
-    this.SECRET_KEY_COOKIE_1 = process.env.SECRET_KEY_COOKIE_1 || 'SECRET_KEY_COOKIE_1_DEFAULT';
-    this.SECRET_KEY_COOKIE_2 = process.env.SECRET_KEY_COOKIE_2 || 'SECRET_KEY_COOKIE_2_DEFAULT';
+    this.SECRET_KEY_COOKIE = process.env.SECRET_KEY_COOKIE;
     this.CLOUDINARY_PROJECT_NAME = process.env.CLOUDINARY_PROJECT_NAME;
     this.CLIENT_URL = process.env.CLIENT_URL;
     this.CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
@@ -35,14 +33,14 @@ class Config {
     this.PEPPER_SECRET = process.env.PEPPER_SECRET;
     this.ACCESS_TOKEN_PRIVATE_KEY = process.env.ACCESS_TOKEN_PRIVATE_KEY;
     this.ACCESS_TOKEN_PUBLIC_KEY = process.env.ACCESS_TOKEN_PUBLIC_KEY;
-    this.ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN!;
+    this.ACCESS_TOKEN_EXPIRES_IN = +process.env.ACCESS_TOKEN_EXPIRES_IN!;
     this.REFRESH_TOKEN_PUBLIC_KEY = process.env.REFRESH_TOKEN_PUBLIC_KEY;
     this.REFRESH_TOKEN_PRIVATE_KEY = process.env.REFRESH_TOKEN_PRIVATE_KEY;
-    this.REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN;
+    this.REFRESH_TOKEN_EXPIRES_IN = +process.env.REFRESH_TOKEN_EXPIRES_IN!;
     this.BASE_COOKIE_OPTION = {
-      httpOnly: this.NODE_ENV === 'production',
+      httpOnly: this.NODE_ENV === 'production', //
       sameSite: 'lax',
-      secure: this.NODE_ENV === 'production',
+      secure: this.NODE_ENV === 'production', // only https ?
       signed: this.NODE_ENV === 'production'
     };
   }

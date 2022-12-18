@@ -1,6 +1,9 @@
 import { CookieOptions } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '@root/config';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
+
 export default class Utils {
   static firstLetterUppercase(str: string): string {
     const valueString = str.toLowerCase();
@@ -72,8 +75,12 @@ export default class Utils {
     return {
       ...config.BASE_COOKIE_OPTION,
       ...options,
-      expires: new Date(Date.now() + expiresIn * 60 * 1000),
-      maxAge: expiresIn * 60 * 1000
+      expires: new Date(Date.now() + expiresIn),
+      maxAge: expiresIn
     };
+  }
+
+  static randomTokenString(): string {
+    return uuidv4();
   }
 }

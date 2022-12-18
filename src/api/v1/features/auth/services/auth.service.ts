@@ -2,7 +2,7 @@ import { config } from '@root/config';
 import { IUserDocument } from '@userV1/interfaces/user.interface';
 import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@authV1/interfaces/auth.interface';
 import { AuthModel } from '@authV1/schemas/auth.schema';
-import { BadRequestError } from '@globalV1/helpers/error-handler';
+import { BadRequestError, UnAuthorizedError } from '@globalV1/helpers/error-handler';
 import Utils from '@globalV1/helpers/utils';
 import { userService } from '@userV1/services/user.service';
 import { QUEUE } from '@globalV1/constants';
@@ -12,12 +12,16 @@ import { ObjectId } from 'mongodb';
 import { Logger } from 'winston';
 import { redisConnection } from '@serviceV1/redis/redis.connection';
 import { Request, Response } from 'express';
+import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
 class AuthService {
   logger: Logger;
   constructor() {
     this.logger = config.createLogger('auth.service');
   }
-  public async signup(signUpInput: ISignUpInput): Promise<{ userInfo: IUserDocument; accessToken: string; refreshToken: string }> {
+  public async signupHandler(
+    signUpInput: ISignUpInput,
+    ip: string
+  ): Promise<{ userInfo: IUserDocument; accessToken: string; refreshToken: string }> {
     const { username, password, email, avatarColor, avatarImage } = signUpInput;
     const authObjectId: ObjectId = new ObjectId();
     const userObjectId: ObjectId = new ObjectId();
@@ -57,11 +61,14 @@ class AuthService {
       username: authData.username,
       avatarColor: authData.avatarColor
     };
-    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken);
+    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken, ip);
     return { userInfo: userInfoForCache, accessToken, refreshToken };
   }
 
-  public async login(authInput: IAuthInput): Promise<{ userDocumet: IUserDocument; accessToken: string; refreshToken: string }> {
+  public async loginHandler(
+    authInput: IAuthInput,
+    ip: string
+  ): Promise<{ userDocumet: IUserDocument; accessToken: string; refreshToken: string }> {
     const { username, email, password } = authInput;
     let userAuthInfo: IAuthDocument | null = null;
     if (username) {
@@ -85,7 +92,7 @@ class AuthService {
       username: userAuthInfo.username,
       avatarColor: userAuthInfo.avatarColor
     };
-    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken);
+    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken, ip);
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
@@ -96,6 +103,29 @@ class AuthService {
       createdAt: userAuthInfo.createdAt
     } as IUserDocument;
     return { userDocumet, accessToken, refreshToken };
+  }
+
+  public async refreshTokenHandler(req: Request): Promise<{ accessToken: string; refreshToken: string }> {
+    let refreshToken;
+    const user = req.user!;
+    if (config.NODE_ENV === 'production') {
+      refreshToken = req.signedCookies.refresh_token;
+    } else {
+      refreshToken = req.cookies.refresh_token;
+    }
+    const refreshTokenObj = await refreshTokenCache.getRefreshTokenFromCache(refreshToken, '.');
+    if (!refreshTokenObj || Date.now() > refreshTokenObj.expires! || !refreshTokenObj.isActive) {
+      throw new UnAuthorizedError('Refresh token not valid');
+    }
+    // generate new refresh token and access token
+    const { accessToken, refreshToken: newRefreshToken } = await this.signToken(user, req.ip);
+    // update old refresh token
+    refreshTokenObj.revoked = Date.now();
+    refreshTokenObj.revokedByIp = req.ip;
+    refreshTokenObj.replacedByToken = newRefreshToken;
+    refreshTokenObj.isActive = false;
+    await refreshTokenCache.updateRefreshTokenFromCache(refreshToken, '.', refreshTokenObj);
+    return { accessToken, refreshToken: newRefreshToken };
   }
 
   public async logout(req: Request, res: Response) {
@@ -109,7 +139,7 @@ class AuthService {
     });
   }
 
-  private async signToken(user: IAuthPayload): Promise<{ accessToken: string; refreshToken: string }> {
+  private async signToken(user: IAuthPayload, ip: string): Promise<{ accessToken: string; refreshToken: string }> {
     // Sign the access token
     const accessToken = Utils.generateJwtToken(
       config.ACCESS_TOKEN_PRIVATE_KEY!,
@@ -117,25 +147,18 @@ class AuthService {
         sub: user.userId
       },
       {
-        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN}m`
+        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN! / 1000}s`
       }
     );
 
-    const refreshToken = Utils.generateJwtToken(
-      config.REFRESH_TOKEN_PRIVATE_KEY!,
-      {
-        sub: user.userId
-      },
-      {
-        expiresIn: `${config.REFRESH_TOKEN_EXPIRES_IN}m`
-      }
-    );
-
-    // Create a Session
-    await redisConnection.client.set(user.userId, JSON.stringify(user), {
-      EX: 60 * 60
-    });
-
+    const refreshToken = Utils.randomTokenString();
+    const refreshTokenInfo = {
+      token: refreshToken,
+      createdByIp: ip,
+      userId: user.userId,
+      isActive: true
+    };
+    await refreshTokenCache.saveRefreshTokenToCache(refreshTokenInfo);
     // Return access token
     return { accessToken, refreshToken };
   }

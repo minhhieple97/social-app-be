@@ -1,8 +1,8 @@
 import { config } from '@root/config';
 import Utils from '@globalV1/helpers/utils';
 import { UnAuthorizedError } from '@globalV1/helpers/error-handler';
-import { NextFunction, Request, Response } from 'express';
-import { redisConnection } from '@serviceV1/redis/redis.connection';
+import { NextFunction, raw, Request, Response } from 'express';
+import { userCache } from '@serviceV1/redis/user.cache';
 
 class AuthMiddleware {
   public async deserializeUser(req: Request, _res: Response, next: NextFunction): Promise<void> {
@@ -25,23 +25,20 @@ class AuthMiddleware {
         return next(new UnAuthorizedError(`Invalid token or user doesn't exist`));
       }
 
-      if (!redisConnection.client.isOpen) {
-        await redisConnection.client.connect();
-      }
-
-      // Check if user has a valid session
-      const rawUser = await redisConnection.client.get(decoded.sub);
+      const rawUser = (await userCache.getUserFromCache(decoded.sub, [`.email`, `.username`, `.score`, `.avatarColor`])) as {
+        '.email': string;
+        '.username': string;
+        '.score': string;
+        '.avatarColor': string;
+      } | null;
       if (!rawUser) {
         return next(new UnAuthorizedError(`User session has expired`));
       }
-      const user = JSON.parse(rawUser);
-
-      // Check if user still exist
-
-      if (!user) {
-        return next(new UnAuthorizedError(`User with that token no longer exist`));
-      }
-      req.user = user;
+      const username = rawUser['.username'];
+      const email = rawUser['.email'];
+      const score = rawUser['.score'];
+      const avatarColor = rawUser['.avatarColor'];
+      req.user = { userId: decoded.sub, username, email, score, avatarColor };
       next();
     } catch (error) {
       next(error);

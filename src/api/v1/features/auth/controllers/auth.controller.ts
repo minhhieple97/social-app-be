@@ -10,7 +10,7 @@ class AuthController {
   @joiValidation(signinSchema)
   public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userDocumet, accessToken: access_token, refreshToken: refresh_token } = await authService.login(req.body);
+      const { userDocumet, accessToken: access_token, refreshToken: refresh_token } = await authService.loginHandler(req.body, req.ip);
       const cookieOptionAccessToken = Utils.generateCookieOptionForAuth(+config.ACCESS_TOKEN_EXPIRES_IN!);
       const cookieOptionRefreshToken = Utils.generateCookieOptionForAuth(+config.REFRESH_TOKEN_EXPIRES_IN!);
       res.cookie('access_token', access_token, cookieOptionAccessToken);
@@ -37,16 +37,33 @@ class AuthController {
   @joiValidation(signupSchema)
   public async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { accessToken: access_token, refreshToken: refresh_token, userInfo } = await authService.signup(req.body);
+      const { accessToken, refreshToken, userInfo } = await authService.signupHandler(req.body, req.ip);
       const cookieOptionAccessToken = Utils.generateCookieOptionForAuth(+config.ACCESS_TOKEN_EXPIRES_IN!);
       const cookieOptionRefreshToken = Utils.generateCookieOptionForAuth(+config.REFRESH_TOKEN_EXPIRES_IN!);
-      res.cookie('access_token', access_token, cookieOptionAccessToken);
-      res.cookie('refresh_token', refresh_token, cookieOptionRefreshToken);
+      res.cookie('access_token', accessToken, cookieOptionAccessToken);
+      res.cookie('refresh_token', refreshToken, cookieOptionRefreshToken);
       res.cookie('logged_in', true, {
         ...cookieOptionAccessToken,
         httpOnly: false
       });
-      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, accessToken: access_token });
+      res.status(HTTP_STATUS_CODE.CREATED).json({ message: 'User created successfully', data: { ...userInfo }, accessToken });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { accessToken, refreshToken } = await authService.refreshTokenHandler(req);
+      const cookieOptionAccessToken = Utils.generateCookieOptionForAuth(+config.ACCESS_TOKEN_EXPIRES_IN!);
+      const cookieOptionRefreshToken = Utils.generateCookieOptionForAuth(+config.REFRESH_TOKEN_EXPIRES_IN!);
+      res.cookie('access_token', accessToken, cookieOptionAccessToken);
+      res.cookie('refresh_token', refreshToken, cookieOptionRefreshToken);
+      res.cookie('logged_in', true, {
+        ...cookieOptionAccessToken,
+        httpOnly: false
+      });
+      res.status(HTTP_STATUS_CODE.ACCEPTED).json({ accessToken });
     } catch (error) {
       next(error);
     }

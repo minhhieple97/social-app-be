@@ -23,12 +23,12 @@ export class UserCache extends BaseCache {
     }
   }
 
-  public async getUserFromCache(userId: string): Promise<IUserDocument | null> {
+  public async getUserFromCache(userId: string, path?: string | string[]): Promise<IUserDocument | null> {
     if (!this.client.isOpen) {
       await this.client.connect();
     }
     const response: IUserDocument = (await this.client.json.get(`users:${userId}`, {
-      path: '.'
+      path
     })) as unknown as IUserDocument;
     return response;
   }

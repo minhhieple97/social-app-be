@@ -33,7 +33,7 @@ export class Server {
     app.use(helmet());
     app.use(
       cors({
-        origin: config.CLIENT_URL,
+        origin: config.NODE_ENV === 'production' ? config.CLIENT_URL : true,
         credentials: true,
         optionsSuccessStatus: 200,
         methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS']
