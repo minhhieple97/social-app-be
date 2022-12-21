@@ -27,7 +27,7 @@ class AuthController {
 
   public async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await authService.logout(req, res);
+      await authService.logoutHandler(req, res);
       res.status(HTTP_STATUS_CODE.OK).json({ message: 'Logout successfully' });
     } catch (error) {
       next(error);

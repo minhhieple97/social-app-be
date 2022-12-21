@@ -10,7 +10,7 @@ class AuthRoutes {
   public routes(): Router {
     this.router.post('/signup', authController.signup);
     this.router.post('/login', authController.login);
-    this.router.post('/refresh-token', authMiddleware.deserializeUser, authController.refreshToken);
+    this.router.post('/refresh-token', authController.refreshToken);
     this.router.post('/logout', authMiddleware.deserializeUser, authMiddleware.checkAuthentication, authController.logout);
     return this.router;
   }

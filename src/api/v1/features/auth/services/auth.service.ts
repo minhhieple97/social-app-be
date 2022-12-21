@@ -1,3 +1,4 @@
+import { tokenService } from './token.service';
 import { config } from '@root/config';
 import { IUserDocument } from '@userV1/interfaces/user.interface';
 import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@authV1/interfaces/auth.interface';
@@ -54,14 +55,7 @@ class AuthService {
     // add user info to mongodb,redis && upload image
     userQueue.addUserJob(QUEUE.ADD_USER_TO_DB, { userInfo: userInfoForCache, avatarImage });
     // sign jwt token
-    const payloadJwtToken = {
-      userId: userObjectId.toString(),
-      score: authData.score,
-      email: authData.email,
-      username: authData.username,
-      avatarColor: authData.avatarColor
-    };
-    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken, ip);
+    const { accessToken, refreshToken } = await this.signToken(userObjectId.toString(), ip);
     return { userInfo: userInfoForCache, accessToken, refreshToken };
   }
 
@@ -85,14 +79,7 @@ class AuthService {
       throw new BadRequestError('Invalid credentials');
     }
     const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
-    const payloadJwtToken = {
-      userId: user._id.toString(),
-      score: user.score!,
-      email: userAuthInfo.email,
-      username: userAuthInfo.username,
-      avatarColor: userAuthInfo.avatarColor
-    };
-    const { accessToken, refreshToken } = await this.signToken(payloadJwtToken, ip);
+    const { accessToken, refreshToken } = await this.signToken(user._id.toString(), ip);
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
@@ -118,7 +105,7 @@ class AuthService {
       throw new UnAuthorizedError('Refresh token not valid');
     }
     // generate new refresh token and access token
-    const { accessToken, refreshToken: newRefreshToken } = await this.signToken(user, req.ip);
+    const { accessToken, refreshToken: newRefreshToken } = await this.signToken(refreshTokenObj.userId, req.ip);
     // update old refresh token
     refreshTokenObj.revoked = Date.now();
     refreshTokenObj.revokedByIp = req.ip;
@@ -128,10 +115,15 @@ class AuthService {
     return { accessToken, refreshToken: newRefreshToken };
   }
 
-  public async logout(req: Request, res: Response) {
-    // delete key in redis
-    const user = req.user;
-    await redisConnection.client.del(user!.userId);
+  public async logoutHandler(req: Request, res: Response) {
+    let refreshToken;
+    const user = req.user!;
+    if (config.NODE_ENV === 'production') {
+      refreshToken = req.signedCookies.refresh_token;
+    } else {
+      refreshToken = req.cookies.refresh_token;
+    }
+    await refreshTokenCache.updateRefreshTokenFromCache(refreshToken, '.isActive', false);
     res.cookie('access_token', '', { maxAge: 1 });
     res.cookie('refresh_token', '', { maxAge: 1 });
     res.cookie('logged_in', '', {
@@ -139,27 +131,9 @@ class AuthService {
     });
   }
 
-  private async signToken(user: IAuthPayload, ip: string): Promise<{ accessToken: string; refreshToken: string }> {
-    // Sign the access token
-    const accessToken = Utils.generateJwtToken(
-      config.ACCESS_TOKEN_PRIVATE_KEY!,
-      {
-        sub: user.userId
-      },
-      {
-        expiresIn: `${config.ACCESS_TOKEN_EXPIRES_IN! / 1000}s`
-      }
-    );
-
-    const refreshToken = Utils.randomTokenString();
-    const refreshTokenInfo = {
-      token: refreshToken,
-      createdByIp: ip,
-      userId: user.userId,
-      isActive: true
-    };
-    await refreshTokenCache.saveRefreshTokenToCache(refreshTokenInfo);
-    // Return access token
+  private async signToken(userId: string, ip: string): Promise<{ accessToken: string; refreshToken: string }> {
+    const accessToken = tokenService.generateAccessToken(userId);
+    const refreshToken = await tokenService.generateRefreshToken(userId, ip);
     return { accessToken, refreshToken };
   }
   private userData(data: IAuthDocument, userObjectId: ObjectId): IUserDocument {

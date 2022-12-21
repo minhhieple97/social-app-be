@@ -1,8 +1,8 @@
 import { config } from '@root/config';
-import Utils from '@globalV1/helpers/utils';
 import { UnAuthorizedError } from '@globalV1/helpers/error-handler';
 import { NextFunction, raw, Request, Response } from 'express';
 import { userCache } from '@serviceV1/redis/user.cache';
+import { tokenService } from '@authV1/services/token.service';
 
 class AuthMiddleware {
   public async deserializeUser(req: Request, _res: Response, next: NextFunction): Promise<void> {
@@ -19,7 +19,7 @@ class AuthMiddleware {
       }
 
       // Validate Access Token
-      const decoded = Utils.verifyJwtToken<{ sub: string }>(accessToken, config.ACCESS_TOKEN_PUBLIC_KEY!);
+      const decoded = tokenService.verifyJwtToken<{ sub: string }>(accessToken, config.ACCESS_TOKEN_PUBLIC_KEY!);
 
       if (!decoded) {
         return next(new UnAuthorizedError(`Invalid token or user doesn't exist`));

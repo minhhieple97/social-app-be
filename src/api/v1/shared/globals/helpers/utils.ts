@@ -1,5 +1,4 @@
 import { CookieOptions } from 'express';
-import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '@root/config';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,23 +24,6 @@ export default class Utils {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return parseInt(result, 10);
-  }
-
-  static generateJwtToken(key: string, payload: Object, options: SignOptions = {}): string {
-    const privateKey = Buffer.from(key, 'base64').toString('ascii');
-    return jwt.sign(payload, privateKey, {
-      ...(options && options),
-      algorithm: 'RS256'
-    });
-  }
-
-  static verifyJwtToken<T>(token: string, key: string): T | null {
-    try {
-      const publicKey = Buffer.from(key, 'base64').toString('ascii');
-      return jwt.verify(token, publicKey) as T;
-    } catch (error) {
-      return null;
-    }
   }
 
   static parseJson(str: string) {
