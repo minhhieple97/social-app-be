@@ -11,7 +11,6 @@ import { userQueue } from '@serviceV1/queues/user.queue';
 import { omit } from 'lodash';
 import { ObjectId } from 'mongodb';
 import { Logger } from 'winston';
-import { redisConnection } from '@serviceV1/redis/redis.connection';
 import { Request, Response } from 'express';
 import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
 class AuthService {

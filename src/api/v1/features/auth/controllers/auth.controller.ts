@@ -10,16 +10,16 @@ class AuthController {
   @joiValidation(signinSchema)
   public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userDocumet, accessToken: access_token, refreshToken: refresh_token } = await authService.loginHandler(req.body, req.ip);
+      const { userDocumet, accessToken, refreshToken } = await authService.loginHandler(req.body, req.ip);
       const cookieOptionAccessToken = Utils.generateCookieOptionForAuth(+config.ACCESS_TOKEN_EXPIRES_IN!);
       const cookieOptionRefreshToken = Utils.generateCookieOptionForAuth(+config.REFRESH_TOKEN_EXPIRES_IN!);
-      res.cookie('access_token', access_token, cookieOptionAccessToken);
-      res.cookie('refresh_token', refresh_token, cookieOptionRefreshToken);
+      res.cookie('access_token', accessToken, cookieOptionAccessToken);
+      res.cookie('refresh_token', refreshToken, cookieOptionRefreshToken);
       res.cookie('logged_in', true, {
         ...cookieOptionAccessToken,
         httpOnly: false
       });
-      res.status(HTTP_STATUS_CODE.OK).json({ message: 'User login successfully', data: { ...userDocumet }, access_token });
+      res.status(HTTP_STATUS_CODE.OK).json({ message: 'User login successfully', data: { ...userDocumet }, accessToken });
     } catch (error) {
       next(error);
     }
