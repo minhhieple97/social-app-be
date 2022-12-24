@@ -1,7 +1,7 @@
 import express, { Express } from 'express';
-import { Server } from './server';
-import databaseConnection from './databases';
-import { config } from './config';
+import { Server } from '@root/server';
+import databaseConnection from '@root/databases';
+import { config } from '@root/config';
 class Application {
   public initialize(): void {
     this.loadConfig();
@@ -13,6 +13,7 @@ class Application {
 
   private loadConfig() {
     config.validateConfig();
+    config.cloudinaryConfig();
   }
 }
 

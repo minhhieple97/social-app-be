@@ -13,16 +13,18 @@ services:
       - mongodb_data:/data/db
 
   redis:
-    image: 'redis:alpine'
     container_name: redis
-    command: redis-server
+    build: .
     ports:
       - 6379:6379
     volumes:
       - redis-data:/data
-      - redis-conf:/usr/local/etc/redis/redis.conf
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 volumes:
   redis-data:
-  redis-conf:
-  mongodb_data:
+  mongodb_data: # run: docker volume create mongodb_data
     external: true

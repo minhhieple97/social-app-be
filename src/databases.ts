@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
-import { config } from './config';
-import Logger from 'bunyan';
-const logger: Logger = config.createLogger('database');
+import { config } from '@root/config';
+const logger = config.createLogger('databases');
 export default () => {
   const connect = () => {
     mongoose
