@@ -6,7 +6,7 @@ class AuthWorker extends BaseWorker {
   }
   async addAuthUserToDb(job: Job, done: DoneCallback): Promise<void> {
     try {
-      const { value } = job.data;
+      // const { value } = job.data;
       // await authService.createAuthUser(value);
       done(null, job.data);
     } catch (error) {

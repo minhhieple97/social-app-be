@@ -53,7 +53,7 @@ export class Server {
   }
 
   private globalErrorHandler(app: Application): void {
-    app.get('/health-checker', (req: Request, res: Response, next: NextFunction) => {
+    app.get('/health-checker', (req: Request, res: Response, _next: NextFunction) => {
       res.status(200).json({
         status: 'success',
         message: 'Welcome to Social application'

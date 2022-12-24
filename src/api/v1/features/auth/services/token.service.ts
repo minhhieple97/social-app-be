@@ -1,10 +1,9 @@
-import { IAuthPayload } from '@authV1/interfaces/auth.interface';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '@root/config';
 import Utils from '@globalV1/helpers/utils';
 import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
 class TokenService {
-  public generateJwtToken(key: string, payload: Object, options: SignOptions = {}): string {
+  public generateJwtToken(key: string, payload: { sub: string }, options: SignOptions = {}): string {
     const privateKey = Buffer.from(key, 'base64').toString('ascii');
     return jwt.sign(payload, privateKey, {
       ...(options && options),

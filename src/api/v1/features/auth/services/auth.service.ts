@@ -1,7 +1,7 @@
 import { tokenService } from './token.service';
 import { config } from '@root/config';
 import { IUserDocument } from '@userV1/interfaces/user.interface';
-import { IAuthDocument, IAuthInput, IAuthPayload, ISignUpData, ISignUpInput } from '@authV1/interfaces/auth.interface';
+import { IAuthDocument, IAuthInput, ISignUpData, ISignUpInput } from '@authV1/interfaces/auth.interface';
 import { AuthModel } from '@authV1/schemas/auth.schema';
 import { BadRequestError, UnAuthorizedError } from '@globalV1/helpers/error-handler';
 import Utils from '@globalV1/helpers/utils';
@@ -93,7 +93,6 @@ class AuthService {
 
   public async refreshTokenHandler(req: Request): Promise<{ accessToken: string; refreshToken: string }> {
     let refreshToken;
-    const user = req.user!;
     if (config.NODE_ENV === 'production') {
       refreshToken = req.signedCookies.refresh_token;
     } else {

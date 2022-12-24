@@ -1,6 +1,6 @@
 import { config } from '@root/config';
 import { UnAuthorizedError } from '@globalV1/helpers/error-handler';
-import { NextFunction, raw, Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { userCache } from '@serviceV1/redis/user.cache';
 import { tokenService } from '@authV1/services/token.service';
 
@@ -55,15 +55,5 @@ class AuthMiddleware {
       next(error);
     }
   }
-
-  //   public async restrictTo(...allowedRoles: string[]) {
-  //     return (req: Request, res: Response, next: NextFunction) => {
-  //       const user = req.user;
-  //       if (!allowedRoles.includes(user.role)) {
-  //         return next(new ForbiddenError('You are not allowed to perform this action'));
-  //       }
-  //       next();
-  //     };
-  //   }
 }
 export const authMiddleware: AuthMiddleware = new AuthMiddleware();
