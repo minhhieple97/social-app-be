@@ -21,6 +21,7 @@ class TokenService {
   }
 
   public generateAccessToken(userId: string): string {
+    console.log(config.ACCESS_TOKEN_PRIVATE_KEY);
     const accessToken = this.generateJwtToken(
       config.ACCESS_TOKEN_PRIVATE_KEY!,
       {

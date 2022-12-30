@@ -13,6 +13,7 @@ import { ObjectId } from 'mongodb';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
 import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
+import { mailTransport } from '@root/shared/services/emails/mail.transport';
 class AuthService {
   logger: Logger;
   constructor() {
@@ -79,6 +80,7 @@ class AuthService {
     }
     const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
     const { accessToken, refreshToken } = await this.signToken(user._id.toString(), ip);
+    await mailTransport.sendMail('hiepvuc@gmail.com', 'Testing development email', 'This is a test email to show theat developmet');
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
