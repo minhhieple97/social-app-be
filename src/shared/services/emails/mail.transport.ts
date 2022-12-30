@@ -43,7 +43,7 @@ class MailTransport {
     };
     try {
       const res = await transporter.sendMail(mailOptions);
-      this.logger.info('Production email sent successfully', res);
+      this.logger.info('Development email sent successfully', res);
     } catch (error) {
       this.logger.error('Error sending email', error);
       throw new BadRequestError('Error sending email');
