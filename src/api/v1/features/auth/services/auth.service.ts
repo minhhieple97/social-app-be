@@ -1,6 +1,6 @@
-import { tokenService } from './token.service';
+import { tokenService } from '@authV1/services/token.service';
 import { config } from '@root/config';
-import { IUserDocument } from '@userV1/interfaces/user.interface';
+import { IResetPasswordParams, IUserDocument } from '@userV1/interfaces/user.interface';
 import { IAuthDocument, IAuthInput, ISignUpData, ISignUpInput } from '@authV1/interfaces/auth.interface';
 import { AuthModel } from '@authV1/schemas/auth.schema';
 import { BadRequestError, UnAuthorizedError } from '@globalV1/helpers/error-handler';
@@ -13,7 +13,10 @@ import { ObjectId } from 'mongodb';
 import { Logger } from 'winston';
 import { Request, Response } from 'express';
 import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
-import { mailTransport } from '@root/shared/services/emails/mail.transport';
+import { emailService } from '@serviceV1/emails/email.service';
+import { emailQueue } from '@serviceV1/queues/email.queue';
+import publicIP from 'ip';
+import moment from 'moment';
 class AuthService {
   logger: Logger;
   constructor() {
@@ -80,7 +83,20 @@ class AuthService {
     }
     const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
     const { accessToken, refreshToken } = await this.signToken(user._id.toString(), ip);
-    await mailTransport.sendMail('hiepvuc@gmail.com', 'Testing development email', 'This is a test email to show theat developmet');
+    const resetLink = `${config.CLIENT_URL}/reset-password?token=12345677`;
+
+    const templateParam: IResetPasswordParams = {
+      username: user.username!,
+      email: user.email!,
+      ipaddress: publicIP.address(),
+      date: moment().format('DD/MM/YYYY HH:mm')
+    };
+    const template = emailService.renderPasswordResetConfirmationTemplate(templateParam);
+    emailQueue.addEmailJob(QUEUE.SEND_RESET_PASSWORD_EMAIL, {
+      template,
+      receiverEmail: 'hieplevuc@gmail.com',
+      subject: 'Confirmation your password!'
+    });
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,

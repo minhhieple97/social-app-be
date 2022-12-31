@@ -4,7 +4,6 @@ import Utils from '@globalV1/helpers/utils';
 import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
 class TokenService {
   public generateJwtToken(key: string, payload: { sub: string }, options: SignOptions = {}): string {
-    console.log({ key });
     const privateKey = Buffer.from(key, 'base64').toString('utf-8');
     return jwt.sign(payload, privateKey, {
       ...(options && options),

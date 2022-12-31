@@ -17,7 +17,7 @@ class MailTransport {
     this.logger = config.createLogger('mail');
   }
 
-  public async sendMail(receiverEmail: string, subject: string, body: string): Promise<void> {
+  public async sendMail(receiverEmail: string, body: string, subject: string): Promise<void> {
     if (config.NODE_ENV !== 'production') {
       this.developmentEmailSender(receiverEmail, subject, body);
     } else {
