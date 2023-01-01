@@ -5,7 +5,6 @@ import { IAuthDocument, IAuthInput, ISignUpData, ISignUpInput } from '@authV1/in
 import { AuthModel } from '@authV1/schemas/auth.schema';
 import { BadRequestError, UnAuthorizedError } from '@globalV1/helpers/error-handler';
 import Utils from '@globalV1/helpers/utils';
-import { userService } from '@userV1/services/user.service';
 import { QUEUE } from '@globalV1/constants';
 import { userQueue } from '@serviceV1/queues/user.queue';
 import { omit } from 'lodash';
@@ -17,6 +16,9 @@ import { emailService } from '@serviceV1/emails/email.service';
 import { emailQueue } from '@serviceV1/queues/email.queue';
 import publicIP from 'ip';
 import moment from 'moment';
+import { authRepository } from '@authV1/schemas/auth.repository.schema';
+import { userRepository } from '@userV1/schemas/user.repository.schema';
+import crypto from 'crypto';
 class AuthService {
   logger: Logger;
   constructor() {
@@ -69,9 +71,9 @@ class AuthService {
     const { username, email, password } = authInput;
     let userAuthInfo: IAuthDocument | null = null;
     if (username) {
-      userAuthInfo = await authService.getUserByConditional({ username: Utils.firstLetterUppercase(username) });
+      userAuthInfo = await authRepository.getAuthInfoUsernameOrEmail({ username: Utils.firstLetterUppercase(username) });
     } else if (email) {
-      userAuthInfo = await authService.getUserByConditional({ email: Utils.lowerCase(email) });
+      userAuthInfo = await authRepository.getAuthInfoUsernameOrEmail({ email: Utils.lowerCase(email) });
     }
     if (!userAuthInfo) {
       throw new BadRequestError('User does not exist');
@@ -81,22 +83,9 @@ class AuthService {
     if (!passwordMatch) {
       throw new BadRequestError('Invalid credentials');
     }
-    const user: IUserDocument = await userService.getUserByAuthId(userAuthInfo._id.toString());
+    const user: IUserDocument = await userRepository.getUserByAuthId(userAuthInfo._id.toString());
     const { accessToken, refreshToken } = await this.signToken(user._id.toString(), ip);
-    const resetLink = `${config.CLIENT_URL}/reset-password?token=12345677`;
 
-    const templateParam: IResetPasswordParams = {
-      username: user.username!,
-      email: user.email!,
-      ipaddress: publicIP.address(),
-      date: moment().format('DD/MM/YYYY HH:mm')
-    };
-    const template = emailService.renderPasswordResetConfirmationTemplate(templateParam);
-    emailQueue.addEmailJob(QUEUE.SEND_RESET_PASSWORD_EMAIL, {
-      template,
-      receiverEmail: 'hieplevuc@gmail.com',
-      subject: 'Confirmation your password!'
-    });
     const userDocumet: IUserDocument = {
       ...user,
       authId: userAuthInfo._id,
@@ -140,10 +129,21 @@ class AuthService {
       refreshToken = req.cookies.refresh_token;
     }
     await refreshTokenCache.updateRefreshTokenFromCache(refreshToken, '.isActive', false);
-    res.cookie('access_token', '', { maxAge: 1 });
-    res.cookie('refresh_token', '', { maxAge: 1 });
-    res.cookie('logged_in', '', {
-      maxAge: 1
+  }
+
+  public async requestResetPasswordHandler(email: string) {
+    const authInfo = await authRepository.getAuthInfoUsernameOrEmail({ email });
+    if (!authInfo) throw new BadRequestError('User does not exist!');
+    const randomBytes: Buffer = await Promise.resolve(crypto.randomBytes(20));
+    const randomString: string = randomBytes.toString('hex');
+    const passwordResetExpires = Date.now() + 15 * 60 * 1000;
+    await authRepository.updatePasswordResetToken(authInfo.id.toString(), { passwordResetToken: randomString, passwordResetExpires });
+    const resetLink = `${config.CLIENT_URL}/reset-password?token=${randomString}`;
+    const template = emailService.renderPasswordResetTemplate(authInfo.username, resetLink);
+    emailQueue.addEmailJob(QUEUE.SEND_RESET_PASSWORD_EMAIL, {
+      template,
+      receiverEmail: authInfo.email,
+      subject: 'Reset your password'
     });
   }
 
@@ -189,19 +189,6 @@ class AuthService {
       avatarColor,
       createdAt: new Date()
     } as unknown as IAuthDocument;
-  }
-
-  public async getUserByUsernameOrEmail(username: string, email: string): Promise<IAuthDocument> {
-    const query = {
-      $or: [{ username: Utils.firstLetterUppercase(username) }, { email: Utils.lowerCase(email) }]
-    };
-    const user: IAuthDocument = (await AuthModel.findOne(query).exec()) as IAuthDocument;
-    return user;
-  }
-
-  public async getUserByConditional(conditional: object): Promise<IAuthDocument> {
-    const user: IAuthDocument = (await AuthModel.findOne({ ...conditional }).exec()) as IAuthDocument;
-    return user;
   }
 }
 export const authService: AuthService = new AuthService();
