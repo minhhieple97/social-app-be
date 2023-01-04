@@ -6,7 +6,8 @@ import HTTP_STATUS_CODE from 'http-status-codes';
 import { authService } from '@authV1/services/auth.service';
 import { signupSchema } from '@authV1/validations/signup.validation';
 import Utils from '@globalV1/helpers/utils';
-import { emailSchema } from '@authV1/validations/password.validation';
+import { emailSchema, passwordSchema } from '@authV1/validations/password.validation';
+import { BadRequestError } from '@globalV1/helpers/error-handler';
 class AuthController {
   @joiValidation(signinSchema)
   public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -81,6 +82,21 @@ class AuthController {
       const { email } = req.body;
       await authService.requestResetPasswordHandler(email);
       res.status(HTTP_STATUS_CODE.OK).json({ message: 'Password reset email sent.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @joiValidation(passwordSchema)
+  public async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { password, confirmPassword } = req.body;
+      const { token } = req.params;
+      if (password !== confirmPassword) {
+        throw new BadRequestError('Password and Confirm Password do not match');
+      }
+      await authService.resetPasswordHandler(password, token);
+      res.status(HTTP_STATUS_CODE.OK).json({ message: 'Password successfully updated.' });
     } catch (error) {
       next(error);
     }

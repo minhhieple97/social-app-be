@@ -32,8 +32,12 @@ class AuthRepository {
   public async updatePasswordResetToken(authId: string, data: { passwordResetToken: string; passwordResetExpires: number }): Promise<void> {
     await AuthModel.updateOne(
       { _id: authId },
-      { passwordResetToken: data.passwordResetExpires, passwordResetExpires: data.passwordResetExpires }
+      { passwordResetToken: data.passwordResetToken, passwordResetExpires: data.passwordResetExpires }
     );
+  }
+
+  public async getAuthInfoByPasswordResetToken(token: string): Promise<IAuthDocument | null> {
+    return AuthModel.findOne({ passwordResetToken: token, passwordResetExpires: { $gt: Date.now() } });
   }
 }
 

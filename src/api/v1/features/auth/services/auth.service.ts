@@ -147,6 +147,29 @@ class AuthService {
     });
   }
 
+  public async resetPasswordHandler(password: string, token: string) {
+    const auth = await authRepository.getAuthInfoByPasswordResetToken(token);
+    if (!auth) {
+      throw new BadRequestError('Reset token has expired!');
+    }
+    auth.password = password;
+    auth.passwordResetExpires = undefined;
+    auth.passwordResetToken = undefined;
+    await auth.save();
+    const templateParams: IResetPasswordParams = {
+      username: auth.username,
+      email: auth.email,
+      ipaddress: publicIP.address(),
+      date: moment().format('DD/MM/YYYY HH:mm')
+    };
+    const template: string = emailService.renderPasswordResetConfirmationTemplate(templateParams);
+    emailQueue.addEmailJob(QUEUE.SEND_RESET_PASSWORD_EMAIL, {
+      template,
+      receiverEmail: auth.email,
+      subject: 'Password Reset Confirmation'
+    });
+  }
+
   private async signToken(userId: string, ip: string): Promise<{ accessToken: string; refreshToken: string }> {
     const accessToken = tokenService.generateAccessToken(userId);
     const refreshToken = await tokenService.generateRefreshToken(userId, ip);

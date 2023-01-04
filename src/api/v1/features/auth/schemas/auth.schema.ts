@@ -25,10 +25,6 @@ const AuthSchema: Schema = new Schema(
   }
 );
 
-AuthSchema.virtual('isExpired').get(function () {
-  return Date.now() >= this.passwordResetExpires;
-});
-
 AuthSchema.pre('save', async function (this: IAuthDocument, next: () => void) {
   const salt = crypto.randomBytes(20);
   const hashedPassword: string = await hash(this.password! + config.PEPPER_SECRET, { salt });
