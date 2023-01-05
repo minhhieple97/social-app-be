@@ -42,9 +42,9 @@ class Config {
     this.REFRESH_TOKEN_EXPIRES_IN = +process.env.REFRESH_TOKEN_EXPIRES_IN!;
     this.BASE_COOKIE_OPTION = {
       httpOnly: this.NODE_ENV === 'production', //
-      sameSite: 'lax',
+      sameSite: this.NODE_ENV === 'production' ? 'strict' : 'lax',
       secure: this.NODE_ENV === 'production', // only https ?
-      signed: this.NODE_ENV === 'production'
+      signed: this.NODE_ENV === 'production' // encode cookie ?
     };
     this.SENDER_EMAIL_HOST = process.env.SENDER_EMAIL_HOST!;
     this.SENDER_EMAIL_USER = process.env.SENDER_EMAIL_USER;

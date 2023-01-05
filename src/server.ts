@@ -28,7 +28,7 @@ export class Server {
     this.startServer(this.app);
   }
   private securityMiddleware(app: Application) {
-    app.use(cookieParser());
+    app.use(cookieParser(config.SECRET_KEY_COOKIE));
     app.use(hpp());
     app.use(helmet());
     app.use(
@@ -56,7 +56,7 @@ export class Server {
     app.get('/health-checker', (req: Request, res: Response, _next: NextFunction) => {
       res.status(200).json({
         status: 'success',
-        message: 'Welcome to Social application'
+        message: 'Welcome to Onlymemes Server :)'
       });
     });
     app.all('*', (req: Request, res: Response) => {

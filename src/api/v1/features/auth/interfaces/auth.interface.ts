@@ -11,7 +11,7 @@ declare global {
 
 export interface IAuthPayload {
   userId: string;
-  score: string;
+  score: number;
   email: string;
   username: string;
   avatarColor: string;

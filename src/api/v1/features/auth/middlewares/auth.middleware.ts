@@ -8,9 +8,10 @@ class AuthMiddleware {
   public async deserializeUser(req: Request, _res: Response, next: NextFunction): Promise<void> {
     try {
       let accessToken;
+      const cookieAccessToken = config.NODE_ENV === 'production' ? req.signedCookies.access_token : req.cookies.access_token;
       if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         accessToken = req.headers.authorization.split(' ')[1];
-      } else if (req.cookies.access_token) {
+      } else if (cookieAccessToken) {
         accessToken = req.cookies.access_token;
       }
 
@@ -28,7 +29,7 @@ class AuthMiddleware {
       const rawUser = (await userCache.getUserFromCache(decoded.sub, [`.email`, `.username`, `.score`, `.avatarColor`])) as {
         '.email': string;
         '.username': string;
-        '.score': string;
+        '.score': number;
         '.avatarColor': string;
       } | null;
       if (!rawUser) {
