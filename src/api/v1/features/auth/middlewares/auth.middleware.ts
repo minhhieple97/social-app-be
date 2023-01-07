@@ -7,12 +7,12 @@ import { tokenService } from '@authV1/services/token.service';
 class AuthMiddleware {
   public async deserializeUser(req: Request, _res: Response, next: NextFunction): Promise<void> {
     try {
-      let accessToken;
-      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        accessToken = req.headers.authorization.split(' ')[1];
-      } else if (req.cookies.access_token) {
-        accessToken = req.cookies.access_token;
-      }
+      const cookieAccessToken = config.IS_PRODUCTION ? req.signedCookies.access_token : req.cookies.access_token;
+
+      const accessToken =
+        req.headers.authorization && req.headers.authorization.startsWith('Bearer')
+          ? req.headers.authorization.split(' ')[1]
+          : cookieAccessToken;
 
       if (!accessToken) {
         return next(new UnAuthorizedError('You are not logged in'));
@@ -28,7 +28,7 @@ class AuthMiddleware {
       const rawUser = (await userCache.getUserFromCache(decoded.sub, [`.email`, `.username`, `.score`, `.avatarColor`])) as {
         '.email': string;
         '.username': string;
-        '.score': string;
+        '.score': number;
         '.avatarColor': string;
       } | null;
       if (!rawUser) {

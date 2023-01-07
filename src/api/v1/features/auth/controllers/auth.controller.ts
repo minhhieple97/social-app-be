@@ -6,6 +6,8 @@ import HTTP_STATUS_CODE from 'http-status-codes';
 import { authService } from '@authV1/services/auth.service';
 import { signupSchema } from '@authV1/validations/signup.validation';
 import Utils from '@globalV1/helpers/utils';
+import { emailSchema, passwordSchema } from '@authV1/validations/password.validation';
+import { BadRequestError } from '@globalV1/helpers/error-handler';
 class AuthController {
   @joiValidation(signinSchema)
   public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -28,6 +30,11 @@ class AuthController {
   public async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       await authService.logoutHandler(req, res);
+      res.cookie('access_token', '', { maxAge: 1 });
+      res.cookie('refresh_token', '', { maxAge: 1 });
+      res.cookie('logged_in', '', {
+        maxAge: 1
+      });
       res.status(HTTP_STATUS_CODE.OK).json({ message: 'Logout successfully' });
     } catch (error) {
       next(error);
@@ -64,6 +71,32 @@ class AuthController {
         httpOnly: false
       });
       res.status(HTTP_STATUS_CODE.ACCEPTED).json({ accessToken });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @joiValidation(emailSchema)
+  public async requestResetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      await authService.requestResetPasswordHandler(email);
+      res.status(HTTP_STATUS_CODE.OK).json({ message: 'Password reset email sent.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @joiValidation(passwordSchema)
+  public async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { password, confirmPassword } = req.body;
+      const { token } = req.params;
+      if (password !== confirmPassword) {
+        throw new BadRequestError('Password and Confirm Password do not match');
+      }
+      await authService.resetPasswordHandler(password, token);
+      res.status(HTTP_STATUS_CODE.OK).json({ message: 'Password successfully updated.' });
     } catch (error) {
       next(error);
     }

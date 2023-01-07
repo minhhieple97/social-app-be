@@ -18,10 +18,16 @@ class Config {
   public ACCESS_TOKEN_PRIVATE_KEY: string | undefined;
   public ACCESS_TOKEN_PUBLIC_KEY: string | undefined;
   public ACCESS_TOKEN_EXPIRES_IN: number | undefined;
-  public REFRESH_TOKEN_PUBLIC_KEY: string | undefined;
-  public REFRESH_TOKEN_PRIVATE_KEY: string | undefined;
   public REFRESH_TOKEN_EXPIRES_IN: number | undefined;
   public BASE_COOKIE_OPTION: CookieOptions;
+  public SENDER_EMAIL: string | undefined;
+  public SENDER_EMAIL_PASSWORD: string | undefined;
+  public SENDGRID_API_KEY: string | undefined;
+  public SENDGRID_SENDER: string | undefined;
+  public SENDER_EMAIL_HOST: string | undefined;
+  public SENDER_EMAIL_USER: string | undefined;
+  public SENDER_EMAIL_PORT: number | undefined;
+  public IS_PRODUCTION: boolean;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -34,15 +40,19 @@ class Config {
     this.ACCESS_TOKEN_PRIVATE_KEY = process.env.ACCESS_TOKEN_PRIVATE_KEY;
     this.ACCESS_TOKEN_PUBLIC_KEY = process.env.ACCESS_TOKEN_PUBLIC_KEY;
     this.ACCESS_TOKEN_EXPIRES_IN = +process.env.ACCESS_TOKEN_EXPIRES_IN!;
-    this.REFRESH_TOKEN_PUBLIC_KEY = process.env.REFRESH_TOKEN_PUBLIC_KEY;
-    this.REFRESH_TOKEN_PRIVATE_KEY = process.env.REFRESH_TOKEN_PRIVATE_KEY;
     this.REFRESH_TOKEN_EXPIRES_IN = +process.env.REFRESH_TOKEN_EXPIRES_IN!;
+    this.IS_PRODUCTION = this.NODE_ENV === 'production';
     this.BASE_COOKIE_OPTION = {
-      httpOnly: this.NODE_ENV === 'production', //
-      sameSite: 'lax',
-      secure: this.NODE_ENV === 'production', // only https ?
-      signed: this.NODE_ENV === 'production'
+      httpOnly: this.IS_PRODUCTION,
+      sameSite: this.IS_PRODUCTION ? 'strict' : 'lax',
+      secure: this.IS_PRODUCTION, // only https ?
+      signed: this.IS_PRODUCTION // encode cookie ?
     };
+    this.SENDER_EMAIL_HOST = process.env.SENDER_EMAIL_HOST!;
+    this.SENDER_EMAIL_USER = process.env.SENDER_EMAIL_USER;
+    this.SENDER_EMAIL_PASSWORD = process.env.SENDER_EMAIL_PASSWORD;
+    this.SENDER_EMAIL = process.env.SENDER_EMAIL;
+    this.SENDER_EMAIL_PORT = +process.env.SENDER_EMAIL_PORT!;
   }
 
   public validateConfig() {
@@ -68,7 +78,7 @@ class Config {
 
     // When running locally, write everything to the console
     // with proper stacktraces enabled
-    if (this.NODE_ENV !== 'production') {
+    if (!this.IS_PRODUCTION) {
       logger.add(
         new winston.transports.Console({
           format: format.combine(

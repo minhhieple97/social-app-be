@@ -4,7 +4,7 @@ import Utils from '@globalV1/helpers/utils';
 import { refreshTokenCache } from '@serviceV1/redis/refresh-token.cache';
 class TokenService {
   public generateJwtToken(key: string, payload: { sub: string }, options: SignOptions = {}): string {
-    const privateKey = Buffer.from(key, 'base64').toString('ascii');
+    const privateKey = Buffer.from(key, 'base64').toString('utf-8');
     return jwt.sign(payload, privateKey, {
       ...(options && options),
       algorithm: 'RS256'
@@ -13,7 +13,7 @@ class TokenService {
 
   public verifyJwtToken<T>(token: string, key: string): T | null {
     try {
-      const publicKey = Buffer.from(key, 'base64').toString('ascii');
+      const publicKey = Buffer.from(key, 'base64').toString('utf-8');
       return jwt.verify(token, publicKey) as T;
     } catch (error) {
       return null;
