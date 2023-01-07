@@ -95,8 +95,4 @@ export interface IAllUsers {
 
 export interface IPayloadJwt {
   userId: string;
-  uId: string;
-  username: string;
-  email: string;
-  avatarColor: string;
 }

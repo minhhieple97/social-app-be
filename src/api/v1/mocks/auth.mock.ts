@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { IAuthDocument, IAuthPayload } from '@authV1/interfaces/auth.interface';
 import { IPayloadJwt } from '@userV1/interfaces/user.interface';
-import { Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { jest } from '@jest/globals';
-export const authMockRequest = (cookieData: IPayloadJwt, body: IAuthMock, currentUser?: IAuthPayload | null, params?: any) => ({
+export const authMockRequest = (cookieData: IPayloadJwt | {}, body: IAuthMock, currentUser?: IAuthPayload | null, params?: any) => ({
   session: cookieData,
   body,
   params,
@@ -12,7 +12,7 @@ export const authMockRequest = (cookieData: IPayloadJwt, body: IAuthMock, curren
 });
 
 export interface IJWT {
-  jwt?: string;
+  access_token?: string;
 }
 
 export const authMockResponse = (): Response => {
@@ -20,6 +20,11 @@ export const authMockResponse = (): Response => {
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
   return res;
+};
+
+export const authMockNext = (): NextFunction => {
+  const next: NextFunction = jest.fn();
+  return next;
 };
 
 export interface IAuthMock {

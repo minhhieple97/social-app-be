@@ -27,6 +27,7 @@ class Config {
   public SENDER_EMAIL_HOST: string | undefined;
   public SENDER_EMAIL_USER: string | undefined;
   public SENDER_EMAIL_PORT: number | undefined;
+  public IS_PRODUCTION: boolean;
   constructor() {
     this.DATABASE_URL = process.env.DATABASE_URL;
     this.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -40,11 +41,12 @@ class Config {
     this.ACCESS_TOKEN_PUBLIC_KEY = process.env.ACCESS_TOKEN_PUBLIC_KEY;
     this.ACCESS_TOKEN_EXPIRES_IN = +process.env.ACCESS_TOKEN_EXPIRES_IN!;
     this.REFRESH_TOKEN_EXPIRES_IN = +process.env.REFRESH_TOKEN_EXPIRES_IN!;
+    this.IS_PRODUCTION = this.NODE_ENV === 'production';
     this.BASE_COOKIE_OPTION = {
-      httpOnly: this.NODE_ENV === 'production', //
-      sameSite: this.NODE_ENV === 'production' ? 'strict' : 'lax',
-      secure: this.NODE_ENV === 'production', // only https ?
-      signed: this.NODE_ENV === 'production' // encode cookie ?
+      httpOnly: this.IS_PRODUCTION,
+      sameSite: this.IS_PRODUCTION ? 'strict' : 'lax',
+      secure: this.IS_PRODUCTION, // only https ?
+      signed: this.IS_PRODUCTION // encode cookie ?
     };
     this.SENDER_EMAIL_HOST = process.env.SENDER_EMAIL_HOST!;
     this.SENDER_EMAIL_USER = process.env.SENDER_EMAIL_USER;
@@ -76,7 +78,7 @@ class Config {
 
     // When running locally, write everything to the console
     // with proper stacktraces enabled
-    if (this.NODE_ENV !== 'production') {
+    if (!this.IS_PRODUCTION) {
       logger.add(
         new winston.transports.Console({
           format: format.combine(

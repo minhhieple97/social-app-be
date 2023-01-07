@@ -13,6 +13,7 @@ import { CustomError, IErrorResponse } from '@globalV1/helpers/error-handler';
 import applicationRoutes from '@root/routes';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import { COMMON } from '@globalV1/constants';
 const SERVER_PORT = 8000;
 const logger = config.createLogger('server');
 export class Server {
@@ -33,7 +34,7 @@ export class Server {
     app.use(helmet());
     app.use(
       cors({
-        origin: config.NODE_ENV === 'production' ? config.CLIENT_URL : true,
+        origin: config.IS_PRODUCTION ? config.CLIENT_URL : true,
         credentials: true,
         optionsSuccessStatus: 200,
         methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS']
@@ -43,7 +44,7 @@ export class Server {
 
   private standardMiddleware(app: Application) {
     app.use(compression());
-    if (config.NODE_ENV === 'development') app.use(morgan('dev'));
+    if (!config.IS_PRODUCTION) app.use(morgan('dev'));
     app.use(json({ limit: '50mb' }));
     app.use(urlencoded({ extended: true, limit: '50mb' }));
   }
@@ -56,18 +57,19 @@ export class Server {
     app.get('/health-checker', (req: Request, res: Response, _next: NextFunction) => {
       res.status(200).json({
         status: 'success',
-        message: 'Welcome to Onlymemes Server :)'
+        message: `Welcome to ${COMMON.APP_NAME} Server :)`
       });
     });
+
     app.all('*', (req: Request, res: Response) => {
       res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ message: `${req.originalUrl} not found` });
     });
 
-    app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction) => {
+    app.use((error: IErrorResponse, _req: Request, res: Response, _next: NextFunction) => {
       if (error instanceof CustomError) {
         return res.status(error.statusCode).json(error.serializeErrors());
       }
-      if (config.NODE_ENV !== 'production') {
+      if (!config.IS_PRODUCTION) {
         logger.error(error);
       }
       return res.status(HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR).end();

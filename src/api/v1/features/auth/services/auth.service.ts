@@ -99,12 +99,7 @@ class AuthService {
   }
 
   public async refreshTokenHandler(req: Request): Promise<{ accessToken: string; refreshToken: string }> {
-    let refreshToken;
-    if (config.NODE_ENV === 'production') {
-      refreshToken = req.signedCookies.refresh_token;
-    } else {
-      refreshToken = req.cookies.refresh_token;
-    }
+    const refreshToken = config.IS_PRODUCTION ? req.signedCookies.refresh_token : req.cookies.refresh_token;
     const refreshTokenObj = await refreshTokenCache.getRefreshTokenFromCache(refreshToken, '.');
     if (!refreshTokenObj || Date.now() > refreshTokenObj.expires! || !refreshTokenObj.isActive) {
       throw new UnAuthorizedError('Refresh token not valid');
@@ -121,13 +116,7 @@ class AuthService {
   }
 
   public async logoutHandler(req: Request, res: Response) {
-    let refreshToken;
-    const user = req.user!;
-    if (config.NODE_ENV === 'production') {
-      refreshToken = req.signedCookies.refresh_token;
-    } else {
-      refreshToken = req.cookies.refresh_token;
-    }
+    const refreshToken = config.IS_PRODUCTION ? req.signedCookies.refresh_token : req.cookies.refresh_token;
     await refreshTokenCache.updateRefreshTokenFromCache(refreshToken, '.isActive', false);
   }
 

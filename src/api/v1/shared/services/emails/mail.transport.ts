@@ -1,3 +1,4 @@
+import { COMMON } from '@globalV1/constants';
 import { config } from '@root/config';
 import { Logger } from 'winston';
 import nodemailer from 'nodemailer';
@@ -18,11 +19,10 @@ class MailTransport {
   }
 
   public async sendMail(receiverEmail: string, body: string, subject: string): Promise<void> {
-    if (config.NODE_ENV !== 'production') {
-      this.developmentEmailSender(receiverEmail, subject, body);
-    } else {
-      this.productionEmailSender(receiverEmail, subject, body);
+    if (config.IS_PRODUCTION) {
+      return this.developmentEmailSender(receiverEmail, subject, body);
     }
+    return this.productionEmailSender(receiverEmail, subject, body);
   }
 
   private async developmentEmailSender(receiverEmail: string, subject: string, body: string): Promise<void> {
@@ -36,7 +36,7 @@ class MailTransport {
       }
     });
     const mailOptions: IMailOptions = {
-      from: `Social App <${config.SENDER_EMAIL}>`,
+      from: `${COMMON.APP_NAME} App <${config.SENDER_EMAIL}>`,
       to: receiverEmail,
       subject,
       html: body
@@ -52,7 +52,7 @@ class MailTransport {
 
   private async productionEmailSender(receiverEmail: string, subject: string, body: string): Promise<void> {
     const mailOptions: IMailOptions = {
-      from: `Social App <${config.SENDER_EMAIL}>`,
+      from: `${COMMON.APP_NAME} App <${config.SENDER_EMAIL}>`,
       to: receiverEmail,
       subject,
       html: body
